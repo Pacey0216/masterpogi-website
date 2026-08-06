@@ -3,63 +3,96 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Master Pogi watch catalog">
   <title>Master Pogi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-<header>
-  <a class="brand" href="#home"><span class="logo">MP</span><strong>MASTER POGI</strong></a>
-  <nav><a href="#home">Home</a><a href="#shop">Shop</a><a href="#order">How to Order</a></nav>
-</header>
+<body class="master-theme">
+  <header class="simple-header">
+    <a class="brand-lockup" href="#top">
+      <img src="assets/brand-avatar.jpg" alt="Master Pogi logo">
+      <strong>Master Pogi</strong>
+    </a>
+    <a class="header-message" data-message-link target="_blank" rel="noopener">Message Us</a>
+  </header>
 
-<main>
-<section class="hero" id="home">
-  <div>
-    <p class="eyebrow">MASTER POGI COLLECTION</p>
-    <h1>Style, value, and live inventory.</h1>
-    <p>Browse available products and message us directly to reserve.</p>
-    <a class="btn gold" href="#shop">Browse Products</a>
-    <a class="btn" id="topMessage" target="_blank">Message Us</a>
-  </div>
-  <div class="hero-card">⌚<small>Fresh drops. Limited stock.</small></div>
-</section>
+  <main id="top">
+    <section class="brand-hero">
+      <img class="hero-cover" src="assets/brand-cover.jpg" alt="Master Pogi cover">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <span class="brand-kicker">MASTER POGI</span>
+        <h1>Good finds. Simple ordering.</h1>
+        <p>Search the exact watch you want, check what is available, and message us directly.</p>
+        <div class="hero-search">
+          <span>⌕</span>
+          <input id="heroSearch" type="search" placeholder="Search watch, style, or SKU">
+          <button id="heroSearchButton">Search</button>
+        </div>
+        <a class="primary-action" data-message-link target="_blank" rel="noopener">Message Master Pogi</a>
+      </div>
+    </section>
 
-<section id="shop">
-  <div class="section-head">
-    <div><p class="eyebrow">LIVE CATALOG</p><h2>Available Products</h2></div>
-    <span id="status">Loading inventory…</span>
-  </div>
+    <section class="catalog-shell">
+      <div class="catalog-intro">
+        <div>
+          <span class="section-label">FAST PICKS</span>
+          <h2>Top-Selling Watches</h2>
+          <p>Most requested products based on recorded sales.</p>
+        </div>
+      </div>
+      <div id="topSellers" class="horizontal-products"></div>
 
-  <div class="filters">
-    <input id="search" placeholder="Search product, brand, or SKU">
-    <select id="category"><option value="">All categories</option></select>
-    <select id="availability">
-      <option value="available">Available only</option>
-      <option value="all">All products</option>
-      <option value="out">Out of stock</option>
-    </select>
-  </div>
+      <div class="catalog-title">
+        <div>
+          <span class="section-label">LIVE CATALOG</span>
+          <h2>Available Watches</h2>
+        </div>
+        <span id="inventoryStatus">Sample products</span>
+      </div>
 
-  <div id="products" class="grid"></div>
-  <div id="empty" class="empty hidden">No matching products.</div>
-</section>
+      <div class="sticky-search">
+        <input id="catalogSearch" type="search" placeholder="Type brand, model, style, or SKU">
+        <select id="categoryFilter">
+          <option value="">All styles</option>
+        </select>
+      </div>
 
-<section id="order" class="order">
-  <p class="eyebrow">HOW TO ORDER</p>
-  <h2>Choose. Message. Confirm.</h2>
-  <div class="steps">
-    <article><b>01</b><h3>Choose a product</h3><p>Check the price, condition, and stock.</p></article>
-    <article><b>02</b><h3>Message Master Pogi</h3><p>Send the SKU using the product button.</p></article>
-    <article><b>03</b><h3>Confirm the order</h3><p>We confirm availability, payment, and delivery.</p></article>
-  </div>
-</section>
-</main>
+      <div id="productGrid" class="product-grid"></div>
+      <div id="emptyState" class="empty-state hidden">
+        No watch found. Try another word or message us directly.
+      </div>
+    </section>
 
-<footer>© <span id="year"></span> Master Pogi · Inventory powered by Google Sheets</footer>
+    <section class="quick-order">
+      <div>
+        <span class="section-label">NO COMPLICATED CHECKOUT</span>
+        <h2>See a watch you like?</h2>
+        <p>Tap Message Us, send the SKU, and we will confirm availability and delivery.</p>
+      </div>
+      <a class="primary-action" data-message-link target="_blank" rel="noopener">Message Us Now</a>
+    </section>
+  </main>
 
-<dialog id="modal"><button id="close">×</button><div id="modalBody"></div></dialog>
+  <a class="floating-message" data-message-link target="_blank" rel="noopener">
+    <span>●</span> Message Us
+  </a>
 
-<script src="config.js"></script>
-<script src="app.js"></script>
+  <dialog id="productDialog">
+    <button id="closeDialog" class="dialog-close" aria-label="Close">×</button>
+    <div id="dialogBody"></div>
+  </dialog>
+
+  <footer>
+    <strong>Master Pogi</strong>
+    <span>Sulit watches. Updated inventory. Message us anytime.</span>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

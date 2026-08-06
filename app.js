@@ -1,69 +1,135 @@
-const C=window.MASTER_POGI_CONFIG;
+const C=window.STORE_CONFIG;
+const samples=window.SAMPLE_PRODUCTS||[];
 const $=id=>document.getElementById(id);
-const sample=[
-{sku:"MP-0001",name:"Sample Product",category:"Watch",brand:"Sample",model:"01",grade:"Grade B",conditionNotes:"Replace this sample from Google Sheets.",sellingPrice:2500,stock:1,mainImageUrl:"",description:"Sample listing until the API is connected."},
-{sku:"MP-0002",name:"Sample Accessory",category:"Accessory",brand:"Master Pogi",model:"",grade:"N/A",conditionNotes:"Sample only.",sellingPrice:650,stock:0,mainImageUrl:"",description:"Sample out-of-stock item."}
-];
-let products=[];
-$("year").textContent=new Date().getFullYear();
-$("topMessage").href=C.messengerUrl;
-$("search").oninput=filter;
-$("category").onchange=filter;
-$("availability").onchange=filter;
-$("close").onclick=()=>$("modal").close();
+const state={products:[],filtered:[]};
 
-load();
+document.querySelectorAll("[data-message-link]").forEach(a=>a.href=C.messengerUrl);
+$("closeDialog").onclick=()=>$("productDialog").close();
+$("heroSearchButton").onclick=()=>{ $("catalogSearch").value=$("heroSearch").value; runSearch(); document.querySelector(".catalog-shell").scrollIntoView({behavior:"smooth"}); };
+$("heroSearch").addEventListener("keydown",e=>{if(e.key==="Enter")$("heroSearchButton").click()});
+$("catalogSearch").oninput=runSearch;
+$("categoryFilter").onchange=runSearch;
 
-async function load(){
+loadProducts();
+
+async function loadProducts(){
   try{
     if(!C.apiUrl){
-      products=C.showSamplesWhenDisconnected?sample:[];
-      $("status").textContent=C.showSamplesWhenDisconnected?"Sample mode — connect Apps Script API.":"API not connected.";
+      state.products=samples;
+      $("inventoryStatus").textContent="Sample mode — sheet connection comes next";
     }else{
-      const r=await fetch(C.apiUrl,{cache:"no-store"});
-      const d=await r.json();
-      if(!d.success||!Array.isArray(d.products))throw new Error(d.error||"Invalid response");
-      products=d.products;
-      $("status").textContent=`${products.length} live product(s)`;
+      const separator=C.apiUrl.includes("?")?"&":"?";
+      const url=`${C.apiUrl}${separator}store=${encodeURIComponent(C.storeFilter)}`;
+      const response=await fetch(url,{cache:"no-store"});
+      if(!response.ok)throw new Error(`HTTP ${response.status}`);
+      const data=await response.json();
+      if(!data.success||!Array.isArray(data.products))throw new Error(data.error||"Invalid inventory response");
+      state.products=data.products;
+      $("inventoryStatus").textContent=`${state.products.length} product(s) loaded`;
     }
-    categories();filter();
-  }catch(e){
-    console.error(e);products=[];$("status").textContent="Inventory unavailable. Please message us.";render([]);
+    fillCategories();
+    renderTopSellers();
+    runSearch();
+  }catch(error){
+    console.error(error);
+    state.products=[];
+    $("inventoryStatus").textContent="Inventory unavailable — please message us";
+    renderProducts([]);
   }
 }
-function categories(){
-  [...new Set(products.map(p=>p.category).filter(Boolean))].sort().forEach(x=>{
-    const o=document.createElement("option");o.value=x.toLowerCase();o.textContent=x;$("category").appendChild(o);
+
+function fillCategories(){
+  const select=$("categoryFilter");
+  [...new Set(state.products.map(p=>String(p.category||"").trim()).filter(Boolean))].sort().forEach(category=>{
+    const option=document.createElement("option");
+    option.value=category.toLowerCase();
+    option.textContent=category;
+    select.appendChild(option);
   });
 }
-function filter(){
-  const q=$("search").value.toLowerCase(),cat=$("category").value,a=$("availability").value;
-  render(products.filter(p=>{
-    const text=[p.sku,p.name,p.brand,p.model,p.category].join(" ").toLowerCase(),s=Number(p.stock||0);
-    return(!q||text.includes(q))&&(!cat||String(p.category||"").toLowerCase()===cat)&&(a==="all"||(a==="available"&&s>0)||(a==="out"&&s<=0));
-  }));
-}
-function render(list){
-  $("products").innerHTML="";$("empty").classList.toggle("hidden",list.length>0);
-  list.forEach(p=>{
-    const s=Number(p.stock||0),available=s>0,card=document.createElement("article");card.className="card";
-    card.innerHTML=`<div class="photo">${p.mainImageUrl?`<img src="${esc(p.mainImageUrl)}" alt="${esc(p.name)}">`:"⌚"}</div>
-    <div class="body"><div class="meta"><span>${esc(p.category||"Product")}</span><span>${esc(p.sku||"")}</span></div>
-    <h3>${esc(p.name||"Unnamed Product")}</h3><div class="price">${money(p.sellingPrice)}</div>
-    <span class="stock ${available?"available":"out"}">${available?`Available · ${s} left`:"Out of Stock"}</span>
-    <div class="actions"><button class="btn view">View</button><a class="btn gold" target="_blank" href="${C.messengerUrl}">${available?"Message":"Ask"}</a></div></div>`;
-    card.querySelector(".view").onclick=()=>openProduct(p);$("products").appendChild(card);
+
+function runSearch(){
+  const q=$("catalogSearch").value.trim().toLowerCase();
+  const cat=$("categoryFilter").value;
+  state.filtered=state.products.filter(p=>{
+    const searchable=[p.sku,p.name,p.category,p.grade,...Object.values(p.specs||{})].join(" ").toLowerCase();
+    return(!q||searchable.includes(q))&&(!cat||String(p.category||"").toLowerCase()===cat);
   });
+  renderProducts(state.filtered);
 }
-function openProduct(p){
-  const s=Number(p.stock||0);
-  $("modalBody").innerHTML=`<div class="modal-grid"><div class="modal-photo">${p.mainImageUrl?`<img src="${esc(p.mainImageUrl)}" alt="${esc(p.name)}">`:"⌚"}</div>
-  <div class="modal-info"><small>${esc(p.sku||"")}</small><h2>${esc(p.name||"")}</h2><div class="price">${money(p.sellingPrice)}</div>
-  <span class="stock ${s>0?"available":"out"}">${s>0?`Available · ${s} left`:"Out of Stock"}</span>
-  <p><b>Brand:</b> ${esc(p.brand||"—")}</p><p><b>Model:</b> ${esc(p.model||"—")}</p><p><b>Grade:</b> ${esc(p.grade||"—")}</p>
-  <p>${esc(p.description||"")}</p><p><b>Condition:</b> ${esc(p.conditionNotes||"Contact us for details.")}</p>
-  <a class="btn gold" target="_blank" href="${C.messengerUrl}">Message About This Product</a></div></div>`;
-  $("modal").showModal();
+
+function renderTopSellers(){
+  const top=[...state.products].sort((a,b)=>Number(b.sold||0)-Number(a.sold||0)).slice(0,4);
+  const container=$("topSellers");
+  container.innerHTML="";
+  top.forEach(p=>container.appendChild(productCard(p,true)));
 }
-function money(v){return new Intl.NumberFormat(C.locale,{style:"currency",currency:C.currency,maximumFractionDigits:0}).format(Number(v||0))}
-function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+function renderProducts(list){
+  const grid=$("productGrid");
+  grid.innerHTML="";
+  $("emptyState").classList.toggle("hidden",list.length>0);
+  list.forEach(p=>grid.appendChild(productCard(p,false)));
+}
+
+function productCard(p,compact){
+  const stock=Number(p.stock||0);
+  const available=stock>0;
+  const article=document.createElement("article");
+  article.className="product-card";
+  const image=p.image?`<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy">`:"⌚";
+  article.innerHTML=`
+    <div class="product-photo">${image}</div>
+    <div class="product-body">
+      <div class="product-meta"><span>${escapeHtml(p.category||"Watch")}</span><span>${escapeHtml(p.sku||"")}</span></div>
+      <h3 class="product-name">${escapeHtml(p.name||"Unnamed Watch")}</h3>
+      <div class="product-price">${formatMoney(p.price??p.sellingPrice)}</div>
+      <span class="stock-badge ${available?"available":"out"}">${available?`Available · ${stock} left`:"Out of Stock"}</span>
+      <div class="sold-count">${Number(p.sold||0)} recorded sale(s)</div>
+      <div class="card-actions">
+        <button type="button">Details</button>
+        <a href="${buildMessageUrl(p)}" target="_blank" rel="noopener">${available?"Message Us":"Ask Us"}</a>
+      </div>
+    </div>`;
+  article.querySelector("button").onclick=()=>openProfile(p);
+  return article;
+}
+
+function openProfile(p){
+  const stock=Number(p.stock||0),available=stock>0;
+  const specs=Object.entries(p.specs||{}).map(([key,value])=>`<div class="spec-row"><span>${escapeHtml(key)}</span><span>${escapeHtml(value)}</span></div>`).join("");
+  $("dialogBody").innerHTML=`
+    <div class="product-profile">
+      <div class="profile-image">${p.image?`<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}">`:"⌚"}</div>
+      <div class="profile-info">
+        <div class="profile-sku">${escapeHtml(p.sku||"")}</div>
+        <h2>${escapeHtml(p.name||"Unnamed Watch")}</h2>
+        <div class="profile-price">${formatMoney(p.price??p.sellingPrice)}</div>
+        <span class="stock-badge ${available?"available":"out"}">${available?`Available · ${stock} left`:"Out of Stock"}</span>
+        <p class="profile-description">${escapeHtml(p.description||"Message us for complete product details.")}</p>
+        <div class="specs">
+          <div class="spec-row"><span>Grade</span><span>${escapeHtml(p.grade||"—")}</span></div>
+          <div class="spec-row"><span>Category</span><span>${escapeHtml(p.category||"Watch")}</span></div>
+          ${specs}
+        </div>
+        <a class="primary-action" href="${buildMessageUrl(p)}" target="_blank" rel="noopener">Message About ${escapeHtml(p.sku||"This Watch")}</a>
+      </div>
+    </div>`;
+  $("productDialog").showModal();
+}
+
+function buildMessageUrl(p){
+  const url=C.messengerUrl||"#";
+  if(url.includes("m.me/")){
+    const separator=url.includes("?")?"&":"?";
+    return `${url}${separator}ref=${encodeURIComponent(p.sku||"product")}`;
+  }
+  return url;
+}
+
+function formatMoney(value){
+  return new Intl.NumberFormat(C.locale||"en-PH",{style:"currency",currency:C.currency||"PHP",maximumFractionDigits:0}).format(Number(value||0));
+}
+function escapeHtml(value){
+  return String(value??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}

@@ -1,32 +1,28 @@
-# Master Pogi Website Starter
+# Master Pogi simplified storefront
 
-## Architecture
-Two branded websites can share:
-- one Google Sheet
-- one inventory form
-- one Apps Script API
-- one stock count
+## Included design decisions
+- Search is visible immediately in the hero section.
+- Only one header action: Message Us.
+- Top-selling products appear before the full catalog.
+- Product cards stay simple.
+- Product details open in a premium full product profile.
+- A floating Message Us button stays visible on mobile.
+- Google Sheet/API integration is intentionally disabled for design review.
 
-This package is the Master Pogi frontend.
+## Current mode
+The site uses sample unbranded products from `data.js`.
 
-## Connect the inventory
-1. Deploy the inventory Apps Script as a Web App.
-2. Copy the `/exec` URL.
-3. Open `config.js`.
-4. Set:
-   `apiUrl: "YOUR_EXEC_URL?store=masterpogi"`
+## Later connection
+The shared sheet reference is already stored in `config.js`, but the website still needs a deployed Apps Script `/exec` endpoint.
 
-For products to appear:
-- Store must be `Master Pogi` or `Both`
-- Website Visibility must be `Published`
-- SKU and Product Name must not be blank
+When ready:
+1. Deploy the Apps Script inventory API.
+2. Edit `config.js`.
+3. Paste the URL into `apiUrl`.
+4. Set `sampleMode` to false if desired.
+5. Replace the Messenger placeholder.
 
-## Connect Messenger
-Replace `https://m.me/YOUR_PAGE_USERNAME` in `config.js`.
+Shared sheet:
+https://docs.google.com/spreadsheets/d/1ljK2RqkdA8E3iEpEutrhMnTurxGqXwY6Kb8yF2hW3S8/edit?gid=537048309#gid=537048309
 
-## Free deployment
-Use AWS Amplify, Cloudflare Pages, or GitHub Pages.
-No build command is needed because this is a static HTML/CSS/JS site.
-
-## Important
 Use this storefront only for products you are legally permitted to sell.
