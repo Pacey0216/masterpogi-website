@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Master Pogi</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <a class="brand" href="#home"><span class="logo">MP</span><strong>MASTER POGI</strong></a>
+  <nav><a href="#home">Home</a><a href="#shop">Shop</a><a href="#order">How to Order</a></nav>
+</header>
+
+<main>
+<section class="hero" id="home">
+  <div>
+    <p class="eyebrow">MASTER POGI COLLECTION</p>
+    <h1>Style, value, and live inventory.</h1>
+    <p>Browse available products and message us directly to reserve.</p>
+    <a class="btn gold" href="#shop">Browse Products</a>
+    <a class="btn" id="topMessage" target="_blank">Message Us</a>
+  </div>
+  <div class="hero-card">⌚<small>Fresh drops. Limited stock.</small></div>
+</section>
+
+<section id="shop">
+  <div class="section-head">
+    <div><p class="eyebrow">LIVE CATALOG</p><h2>Available Products</h2></div>
+    <span id="status">Loading inventory…</span>
+  </div>
+
+  <div class="filters">
+    <input id="search" placeholder="Search product, brand, or SKU">
+    <select id="category"><option value="">All categories</option></select>
+    <select id="availability">
+      <option value="available">Available only</option>
+      <option value="all">All products</option>
+      <option value="out">Out of stock</option>
+    </select>
+  </div>
+
+  <div id="products" class="grid"></div>
+  <div id="empty" class="empty hidden">No matching products.</div>
+</section>
+
+<section id="order" class="order">
+  <p class="eyebrow">HOW TO ORDER</p>
+  <h2>Choose. Message. Confirm.</h2>
+  <div class="steps">
+    <article><b>01</b><h3>Choose a product</h3><p>Check the price, condition, and stock.</p></article>
+    <article><b>02</b><h3>Message Master Pogi</h3><p>Send the SKU using the product button.</p></article>
+    <article><b>03</b><h3>Confirm the order</h3><p>We confirm availability, payment, and delivery.</p></article>
+  </div>
+</section>
+</main>
+
+<footer>© <span id="year"></span> Master Pogi · Inventory powered by Google Sheets</footer>
+
+<dialog id="modal"><button id="close">×</button><div id="modalBody"></div></dialog>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
