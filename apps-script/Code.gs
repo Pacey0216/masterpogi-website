@@ -3,6 +3,11 @@ const PRODUCTS_SHEET_NAME = 'Products';
 const VARIANTS_SHEET_NAME = 'Variants';
 const TRANSACTIONS_SHEET_NAME = 'Transactions';
 
+/**
+ * Public storefront endpoint.
+ * Reads the spreadsheet live on every request, so inventory edits do not need
+ * a GitHub commit, Amplify build, scheduled trigger, or manual sync job.
+ */
 function doGet(e) {
   try {
     const products = getPublicProducts_();
@@ -18,6 +23,48 @@ function doGet(e) {
       products: [],
       error: String(error && error.message ? error.message : error)
     });
+  }
+}
+
+/**
+ * Simple trigger. Because this project is bound to the inventory spreadsheet,
+ * onEdit runs automatically for any editor of the file; no installable or
+ * time-based trigger is required.
+ *
+ * - Stamps Variants!M (Last Updated) when a variant row is edited.
+ * - Defaults Active to Yes once Product + Grade + positive Stock are present.
+ * - Stamps Products!T (Last Updated) when product/catalog fields are edited.
+ */
+function onEdit(e) {
+  if (!e || !e.range) return;
+
+  const sheet = e.range.getSheet();
+  const name = sheet.getName();
+  const firstRow = Math.max(2, e.range.getRow());
+  const lastRow = e.range.getLastRow();
+  if (lastRow < 2) return;
+
+  if (name === VARIANTS_SHEET_NAME) {
+    for (let row = firstRow; row <= lastRow; row++) {
+      const productName = text_(sheet.getRange(row, 3).getValue()); // C
+      const grade = text_(sheet.getRange(row, 6).getValue());       // F
+      const stock = number_(sheet.getRange(row, 9).getValue());     // I
+      const activeCell = sheet.getRange(row, 12);                    // L
+
+      if (productName && grade && stock > 0 && !text_(activeCell.getValue())) {
+        activeCell.setValue('Yes');
+      }
+
+      sheet.getRange(row, 13).setValue(new Date());                  // M
+    }
+  }
+
+  if (name === PRODUCTS_SHEET_NAME) {
+    for (let row = firstRow; row <= lastRow; row++) {
+      if (text_(sheet.getRange(row, 2).getValue())) {
+        sheet.getRange(row, 20).setValue(new Date());                // T
+      }
+    }
   }
 }
 
@@ -63,8 +110,9 @@ function getPublicProducts_() {
       : fallbackStock;
     if (totalStock <= 0) continue;
 
-    const sizes = variants.length
-      ? unique_(variants.map(v => text_(v.size)).filter(Boolean)).join(', ')
+    const variantSizes = unique_(variants.map(v => text_(v.size)).filter(Boolean));
+    const sizes = variantSizes.length
+      ? variantSizes.join(', ')
       : text_(row[col['Available Sizes']]);
 
     const gradeQty = { Japan: 0, Swiss: 0, 'Super C': 0 };
@@ -79,18 +127,43 @@ function getPublicProducts_() {
       gradeQty['Super C'] = number_(row[col['Super C Qty']]);
     }
 
+    // Grade price is defined once in Products and applies to every size in that grade.
     const gradePrices = {};
+    const productGradePrices = {
+      Japan: number_(row[col['Japan Price']]),
+      Swiss: number_(row[col['Swiss Price']]),
+      'Super C': number_(row[col['Super C Price']])
+    };
+
+    Object.keys(productGradePrices).forEach(g => {
+      if (gradeQty[g] > 0 && productGradePrices[g] > 0) gradePrices[g] = productGradePrices[g];
+    });
+
+    // Fallback to the variant price only if the Products grade price is blank.
     variants.forEach(v => {
       const g = normalizeGrade_(v.grade);
       const p = number_(v.price);
-      if (!g || p <= 0) return;
-      if (!gradePrices[g] || p < gradePrices[g]) gradePrices[g] = p;
+      if (!g || p <= 0 || gradePrices[g]) return;
+      gradePrices[g] = p;
     });
 
-    const variantPrices = variants.map(v => number_(v.price)).filter(p => p > 0);
-    const priceFrom = variantPrices.length
-      ? Math.min.apply(null, variantPrices)
+    const availableGradePrices = Object.keys(gradeQty)
+      .filter(g => gradeQty[g] > 0)
+      .map(g => number_(gradePrices[g]))
+      .filter(p => p > 0);
+
+    const priceFrom = availableGradePrices.length
+      ? Math.min.apply(null, availableGradePrices)
       : number_(row[col['Price From']]);
+
+    // Normalize every public variant price to the grade-level Products price.
+    variants = variants.map(v => {
+      const g = normalizeGrade_(v.grade);
+      return Object.assign({}, v, {
+        grade: g,
+        price: number_(gradePrices[g]) || number_(v.price) || priceFrom
+      });
+    });
 
     const sku = productId || reference || slug_(name);
     const sold = Math.max(
