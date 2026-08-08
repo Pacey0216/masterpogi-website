@@ -15,8 +15,8 @@ loadProducts();
 async function loadProducts(){
   try{
     if(!C.apiUrl){
-      state.products=samples;
-      $("inventoryStatus").textContent="Sample mode — sheet connection comes next";
+      state.products=C.sampleMode?samples:[];
+      $("inventoryStatus").textContent=C.sampleMode?"Sample mode — sheet connection comes next":"Live inventory connection pending";
     }else{
       const separator=C.apiUrl.includes("?")?"&":"?";
       const url=`${C.apiUrl}${separator}store=${encodeURIComponent(C.storeFilter)}`;
@@ -24,8 +24,8 @@ async function loadProducts(){
       if(!response.ok)throw new Error(`HTTP ${response.status}`);
       const data=await response.json();
       if(!data.success||!Array.isArray(data.products))throw new Error(data.error||"Invalid inventory response");
-      state.products=data.products;
-      $("inventoryStatus").textContent=`${state.products.length} product(s) loaded`;
+      state.products=data.products.filter(p=>Number(p.stock||0)>0&&p.visible!==false);
+      $("inventoryStatus").textContent=`${state.products.length} available product(s)`;
     }
     fillCategories();
     renderTopSellers();
@@ -40,6 +40,7 @@ async function loadProducts(){
 
 function fillCategories(){
   const select=$("categoryFilter");
+  select.querySelectorAll("option:not(:first-child)").forEach(option=>option.remove());
   [...new Set(state.products.map(p=>String(p.category||"").trim()).filter(Boolean))].sort().forEach(category=>{
     const option=document.createElement("option");
     option.value=category.toLowerCase();
