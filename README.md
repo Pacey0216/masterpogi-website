@@ -1,28 +1,31 @@
-# Master Pogi simplified storefront
+# Master Pogi storefront
 
-## Included design decisions
-- Search is visible immediately in the hero section.
-- Only one header action: Message Us.
-- Top-selling products appear before the full catalog.
-- Product cards stay simple.
-- Product details open in a premium full product profile.
-- A floating Message Us button stays visible on mobile.
-- Google Sheet/API integration is intentionally disabled for design review.
+## Current setup
+- Uses the shared `Top Watch 102 + Master Pogi Inventory` Google Sheet.
+- The storefront is prepared for the shared Apps Script inventory API.
+- Sample inventory is disabled.
+- Only products with stock greater than 0 are intended to appear.
+- `Website Visibility = No` hides a product even when stock exists.
 
-## Current mode
-The site uses sample unbranded products from `data.js`.
+## Shared inventory
+The live catalog source is the `Products` tab:
 
-## Later connection
-The shared sheet reference is already stored in `config.js`, but the website still needs a deployed Apps Script `/exec` endpoint.
+https://docs.google.com/spreadsheets/d/1ljK2RqkdA8E3iEpEutrhMnTurxGqXwY6Kb8yF2hW3S8/edit?gid=1807963011#gid=1807963011
 
-When ready:
-1. Deploy the Apps Script inventory API.
-2. Edit `config.js`.
-3. Paste the URL into `apiUrl`.
-4. Set `sampleMode` to false if desired.
-5. Replace the Messenger placeholder.
+Both Master Pogi and Top Watch 102 use the same stock pool.
 
-Shared sheet:
-https://docs.google.com/spreadsheets/d/1ljK2RqkdA8E3iEpEutrhMnTurxGqXwY6Kb8yF2hW3S8/edit?gid=537048309#gid=537048309
+## Shared Apps Script API
+The backend source is in:
 
-Use this storefront only for products you are legally permitted to sell.
+- `apps-script/Code.gs`
+- `apps-script/README.md`
+
+Deploy that script once as a Google Apps Script Web App and use the same `/exec` URL in both storefronts.
+
+## Remaining deployment step
+After the Apps Script Web App is deployed, paste its `/exec` URL into `apiUrl` in:
+
+- `Pacey0216/masterpogi-website/config.js`
+- `Pacey0216/topwatch/config.js`
+
+No GitHub update is needed when stock changes after that. Each storefront fetches current inventory on page load.
