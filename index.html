@@ -16,70 +16,80 @@
       <img src="assets/brand-avatar.jpg" alt="Master Pogi logo">
       <strong>Master Pogi</strong>
     </a>
-    <a class="header-message" data-message-link target="_blank" rel="noopener">Message Us</a>
   </header>
 
   <main id="top">
     <section class="brand-hero">
       <img class="hero-cover" src="assets/brand-cover.jpg" alt="Master Pogi cover">
       <div class="hero-overlay"></div>
-      <div class="hero-content">
-        <span class="brand-kicker">MASTER POGI</span>
-        <h1>Good finds. Simple ordering.</h1>
-        <p>Search the exact watch you want, check what is available, and message us directly.</p>
-        <div class="hero-search">
-          <span>⌕</span>
-          <input id="heroSearch" type="search" placeholder="Search watch, style, or SKU">
-          <button id="heroSearchButton">Search</button>
+      <div class="hero-layout single-column">
+        <div class="hero-copy">
+          <span class="brand-kicker">MASTER POGI</span>
+          <h1>Good finds. Simple ordering.</h1>
+          <p>Search the exact watch you want, check live availability, then order directly.</p>
+          <div class="hero-search">
+            <span>⌕</span>
+            <input id="heroSearch" type="search" placeholder="Search watch, brand, or reference">
+            <button id="heroSearchButton">Search</button>
+          </div>
         </div>
-        <a class="primary-action" data-message-link target="_blank" rel="noopener">Message Master Pogi</a>
       </div>
     </section>
 
     <section class="catalog-shell">
-      <div class="catalog-intro">
+      <div class="catalog-intro carousel-heading">
         <div>
           <span class="section-label">FAST PICKS</span>
           <h2>Top-Selling Watches</h2>
-          <p>Most requested products based on recorded sales.</p>
+          <p>Top 6 watches based on recorded sales.</p>
+        </div>
+        <div class="carousel-controls">
+          <button id="topPrev" type="button" aria-label="Previous watches">‹</button>
+          <button id="topNext" type="button" aria-label="Next watches">›</button>
         </div>
       </div>
-      <div id="topSellers" class="horizontal-products"></div>
+      <div class="top-carousel-window">
+        <div id="topSellers" class="top-carousel-track"></div>
+      </div>
 
       <div class="catalog-title">
         <div>
           <span class="section-label">LIVE CATALOG</span>
           <h2>Available Watches</h2>
         </div>
-        <span id="inventoryStatus">Sample products</span>
+        <span id="inventoryStatus">Loading live inventory…</span>
       </div>
 
       <div class="sticky-search">
-        <input id="catalogSearch" type="search" placeholder="Type brand, model, style, or SKU">
-        <select id="categoryFilter">
-          <option value="">All styles</option>
-        </select>
+        <input id="catalogSearch" type="search" placeholder="Type brand, model, style, or reference">
+        <div class="brand-filter">
+          <button id="brandFilterButton" class="brand-filter-button" type="button">All brands ▾</button>
+          <div id="brandFilterMenu" class="brand-filter-menu hidden"></div>
+        </div>
       </div>
 
       <div id="productGrid" class="product-grid"></div>
-      <div id="emptyState" class="empty-state hidden">
-        No watch found. Try another word or message us directly.
-      </div>
+      <div id="emptyState" class="empty-state hidden">No watch found. Try another brand or search term.</div>
     </section>
 
     <section class="quick-order">
       <div>
-        <span class="section-label">NO COMPLICATED CHECKOUT</span>
-        <h2>See a watch you like?</h2>
-        <p>Tap Message Us, send the SKU, and we will confirm availability and delivery.</p>
+        <span class="section-label">SPECIAL REQUEST</span>
+        <h2>Don't see the watch you like?</h2>
+        <p>Tell us your desired watch and we’ll help you look for it.</p>
       </div>
-      <a class="primary-action" data-message-link target="_blank" rel="noopener">Message Us Now</a>
+      <a id="requestWatchLink" class="primary-action" target="_blank" rel="noopener">Request a Watch</a>
     </section>
   </main>
 
-  <a class="floating-message" data-message-link target="_blank" rel="noopener">
-    <span>●</span> Message Us
-  </a>
+  <div id="contactPanel" class="contact-panel hidden" aria-live="polite">
+    <strong>Contact info</strong>
+    <a id="contactPhone" href="#"><span>☎</span><span id="contactPhoneText"></span></a>
+    <a id="contactEmail" href="#"><span>✉</span><span id="contactEmailText"></span></a>
+    <a id="contactWhatsapp" href="#" target="_blank" rel="noopener"><span>◉</span><span id="contactWhatsappText"></span></a>
+    <a id="contactFacebook" href="#" target="_blank" rel="noopener"><span>◉</span><span>Top Watch 102</span></a>
+  </div>
+  <button id="contactToggle" class="floating-message" type="button"><span>●</span> Message Us</button>
 
   <dialog id="productDialog">
     <button id="closeDialog" class="dialog-close" aria-label="Close">×</button>
@@ -88,11 +98,10 @@
 
   <footer>
     <strong>Master Pogi</strong>
-    <span>Sulit watches. Updated inventory. Message us anytime.</span>
+    <span>Sulit watches. Live inventory. Simple ordering.</span>
   </footer>
 
   <script src="config.js"></script>
-  <script src="data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
