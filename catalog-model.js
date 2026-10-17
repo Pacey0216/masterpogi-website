@@ -14,6 +14,7 @@
   };
   const numeric = value => value !== null && value !== undefined && text(value) !== '' && Number.isFinite(Number(text(value).replace(/,/g, '')));
   const enabled = value => !['false', 'no', '0', 'hidden', 'hide', 'inactive', 'disabled'].includes(folded(value));
+  const isFeatured = value => ['string', 'number', 'boolean'].includes(typeof value) && ['yes', 'true', '1', 'featured'].includes(folded(value));
   const visible = item => enabled(item.visible) && enabled(item.websiteVisibility) && enabled(item['Website Visibility']) && enabled(item.active);
   const alpha = (a, b) => text(a).localeCompare(text(b), 'en', {sensitivity: 'base', numeric: true}) || text(a).localeCompare(text(b), 'en');
   const emptyPhotos = () => [null, null, null, null];
@@ -99,7 +100,7 @@
       products.push({
         sku, name, brand, price: Math.min(...variants.map(v => v.price)),
         stock: variants.reduce((sum, v) => sum + v.stock, 0),
-        sold: number(product.sold), brandSold: totals.get(folded(brand)) || 0,
+        sold: number(product.sold), brandSold: totals.get(folded(brand)) || 0, featured: isFeatured(product.featured),
         variants, specs: publicSpecs(product.specs), description: text(product.description), visible: true
       });
     }
@@ -127,6 +128,11 @@
   function bestSellers(products) {
     return (Array.isArray(products) ? products : []).filter(p => visible(p) && number(p.stock) > 0 && number(p.sold) > 0 && availableVariants(p).length).slice().sort((a, b) => number(b.sold) - number(a.sold) || alpha(a.name, b.name) || alpha(a.brand, b.brand) || alpha(a.sku, b.sku));
   }
+  function featuredProducts(products) {
+    // The Products sheet controls inclusion; recorded sales only control order.
+    // A zero-sale featured watch remains eligible without a bestseller claim.
+    return (Array.isArray(products) ? products : []).filter(p => p && typeof p === 'object' && isFeatured(p.featured) && visible(p) && number(p.stock) > 0 && availableVariants(p).length).slice().sort((a, b) => number(b.sold) - number(a.sold) || alpha(a.name, b.name) || alpha(a.brand, b.brand) || alpha(a.sku, b.sku));
+  }
   function selectionKey(product, variant) {
     return JSON.stringify([text(product?.sku), text(variant?.sku || variant?.variantSku), gradeName(variant?.grade), sizeName(variant?.size)]);
   }
@@ -141,5 +147,5 @@
     const allowed = folded(a.product.brand) !== folded(b.product.brand) || folded(gradeName(a.variant.grade)) !== folded(gradeName(b.variant.grade));
     return {allowed, reason: allowed ? '' : 'same-brand-and-grade'};
   }
-  return Object.freeze({normalizeInventory, availableVariants, sortCatalog, filterProducts, bestSellers, selectionKey, photosForVariant, comparisonEligibility});
+  return Object.freeze({normalizeInventory, availableVariants, sortCatalog, filterProducts, bestSellers, featuredProducts, selectionKey, photosForVariant, comparisonEligibility});
 });
