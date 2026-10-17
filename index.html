@@ -2,42 +2,58 @@
 <html lang="fil">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Master Pogi watch catalog">
-  <title>Master Pogi</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="enhancements.css">
-  <link rel="stylesheet" href="store-v3.css">
-  <link rel="stylesheet" href="store-v4.css?v=20260810-1805">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Mga available na relo ng Master Pogi. Pumili, ikumpara, at magtanong sa Messenger.">
+  <meta name="color-scheme" content="light">
+  <title>Mga Relo · Master Pogi</title>
+  <link rel="stylesheet" href="catalog.css">
+  <script defer src="config.js"></script>
+  <script defer src="catalog-model.js"></script>
+  <script defer src="photo-frame.js"></script>
+  <script defer src="catalog.js"></script>
 </head>
-<body class="master-theme">
-  <header class="simple-header">
-    <a class="brand-lockup" href="#top"><img src="assets/brand-avatar.jpg" alt="Master Pogi logo"><strong>Master Pogi</strong></a>
-    <div class="header-controls"><div class="language-toggle" role="group" aria-label="Language"><button id="filButton" class="language-button active" type="button">FIL</button><span>|</span><button id="engButton" class="language-button" type="button">ENG</button></div></div>
-  </header>
-
-  <main id="top">
-    <section class="brand-hero"><img class="hero-cover" src="assets/brand-cover.jpg" alt="Master Pogi cover"><div class="hero-overlay"></div><div class="hero-layout single-column"><div class="hero-copy"><span class="brand-kicker">MASTER POGI</span><h1 id="heroTitle">Sulit na relo. Simpleng pag-order.</h1><p id="heroDescription">Hanapin ang eksaktong relo, tingnan ang live availability, at umorder direkta.</p><div class="hero-search"><span>⌕</span><input id="heroSearch" type="search" placeholder="Hanapin ang relo, brand, o reference"><button id="heroSearchButton">Hanapin</button></div></div></div></section>
-
-    <section class="catalog-shell">
-      <div class="catalog-intro carousel-heading"><div><span id="fastPicksLabel" class="section-label">MABILISANG PILI</span><h2 id="topSellingTitle">Pinakamabentang Relo</h2><p id="topSellingDescription">Top 6 na relo batay sa naitalang benta.</p></div><div class="carousel-controls"><button id="topPrev" type="button" aria-label="Previous watches">‹</button><button id="topNext" type="button" aria-label="Next watches">›</button></div></div>
-      <div class="top-carousel-window"><div id="topSellers" class="top-carousel-track"></div></div>
-      <div class="catalog-title"><div><span id="catalogLabel" class="section-label">CATALOG</span><h2 id="availableTitle">Mga Available na Relo</h2></div><span id="inventoryStatus">Loading live inventory…</span></div>
-      <div class="sticky-search"><input id="catalogSearch" type="search" placeholder="I-type ang brand, model, style, o reference"><div class="brand-filter"><button id="brandFilterButton" class="brand-filter-button" type="button">Lahat ng Brand ▾</button><div id="brandFilterMenu" class="brand-filter-menu hidden"></div></div></div>
-      <div id="productGrid" class="product-grid"></div><div id="emptyState" class="empty-state hidden"><span id="emptyMessage">Walang nakitang relo. Subukan ang ibang brand o search term.</span></div>
+<body>
+  <main>
+    <section aria-labelledby="topTitle">
+      <div class="section-heading">
+        <h1 id="topTitle">Pinakamabentang Relo</h1>
+        <div class="carousel-controls">
+          <button id="topPrev" type="button" aria-label="Naunang mga relo" aria-controls="topSellers" disabled>‹</button>
+          <button id="topNext" type="button" aria-label="Susunod na mga relo" aria-controls="topSellers" disabled>›</button>
+        </div>
+      </div>
+      <p id="topStatus" class="hint">Kinukuha ang naitalang benta…</p>
+      <div id="topSellers" class="carousel" tabindex="0" aria-label="Mga pinakamabentang relo"></div>
     </section>
-
-    <section class="quick-order"><div><span id="checkoutLabel" class="section-label">ESPESYAL NA REQUEST</span><h2 id="quickOrderTitle">Hindi mo makita ang gusto mong relo?</h2><p id="quickOrderDescription">Sabihin sa amin ang gusto mong relo at tutulungan ka naming hanapin ito.</p></div><a id="requestWatchLink" class="primary-action" href="#" target="_blank" rel="noopener">Mag-request ng Relo</a></section>
+    <section class="catalog" aria-labelledby="availableTitle">
+      <h2 id="availableTitle">Mga Available na Relo</h2>
+      <div class="inventory-line"><p id="inventoryStatus" role="status">Kinukuha ang mga relo…</p><button id="retry" class="text-button" type="button" hidden>Subukan muli</button></div>
+      <form id="filters" class="filters" role="search">
+        <label class="search-label"><span class="sr-only">Hanapin ang relo</span><input id="catalogSearch" type="search" placeholder="Hanapin ang relo…" autocomplete="off"></label>
+        <label><span class="sr-only">Brand</span><select id="brandFilter" aria-label="Brand"><option value="">Lahat ng brand</option></select></label>
+        <label><span class="sr-only">Grade</span><select id="gradeFilter" aria-label="Grade"><option value="">Lahat ng grade</option></select></label>
+        <button id="clearFilters" type="button" class="text-button">I-clear</button>
+      </form>
+      <p id="resultCount" class="hint" aria-live="polite"></p>
+      <div id="productGrid" class="product-grid" aria-busy="true"></div>
+      <p id="emptyState" class="empty-state" hidden>Walang tugma. Subukan ang ibang filter o pangalan.</p>
+    </section>
+    <section id="compareTray" class="compare-tray" aria-labelledby="compareTitle">
+      <div class="tray-heading"><h2 id="compareTitle">Ikumpara ang Relo</h2><span id="selectionCount">0 / 2</span></div>
+      <p id="compareHelp" class="hint">Buksan ang relo at piliin ang grade at sukat. Hanggang dalawa.</p>
+      <div id="compareSelections" class="tray-selections"></div>
+      <div class="tray-actions"><p id="trayMessage" role="status"></p><button id="compareButton" type="button" class="primary" disabled>Ikumpara</button></div>
+    </section>
   </main>
-
-  <div id="contactPanel" class="contact-panel hidden" aria-live="polite"><strong id="contactTitle">Contact info</strong><a id="contactPhone" href="#"><span>☎</span><span id="contactPhoneText"></span></a><a id="contactEmail" href="#"><span>✉</span><span id="contactEmailText"></span></a><a id="contactWhatsapp" href="#" target="_blank" rel="noopener"><span>◉</span><span id="contactWhatsappText"></span></a><a id="contactFacebook" href="#" target="_blank" rel="noopener"><span>◉</span><span>Top Watch 102</span></a></div>
-  <button id="contactToggle" class="floating-message" type="button"><span>●</span> <span id="contactToggleText">I-message Kami</span></button>
-
-  <dialog id="productDialog"><button id="closeDialog" class="dialog-close" aria-label="Close">×</button><div id="dialogBody"></div></dialog>
-  <footer><strong>Master Pogi</strong><span id="footerTagline">Sulit na relo. Live inventory. Simpleng order.</span></footer>
-  <script src="config.js"></script><script src="store-v3.js"></script><script src="variant-fix.js"></script><script src="store-v4.js"></script><script src="store-v4-carousel.js"></script><script src="drive-image-fallback.js"></script>
+  <footer><strong>Master Pogi</strong><a id="contactLink" target="_blank" rel="noopener noreferrer">Magtanong sa Messenger ↗</a></footer>
+  <dialog id="productDialog" aria-labelledby="productTitle">
+    <div class="dialog-bar"><span>Detalye ng relo</span><button class="close-dialog" type="button" aria-label="Isara ang detalye">×</button></div>
+    <div id="productBody"></div>
+  </dialog>
+  <dialog id="comparisonDialog" aria-labelledby="comparisonTitle">
+    <div class="dialog-bar"><h2 id="comparisonTitle">Ikumpara ang Relo</h2><button class="close-dialog" type="button" aria-label="Isara ang paghahambing">×</button></div>
+    <div id="comparisonBody"></div>
+  </dialog>
+  <noscript><p class="empty-state">I-on ang JavaScript para makita ang kasalukuyang mga relo at presyo.</p></noscript>
 </body>
 </html>
