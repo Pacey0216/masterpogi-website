@@ -2,13 +2,14 @@
 (() => {
   'use strict';
   const WORDS = {
-    fil: {title:'Larawan ng relo',close:'Isara',zoomIn:'Palakihin',zoomOut:'Paliitin',reset:'Ibalik',zoom:'Laki ng larawan',hint:'I-pinch para palakihin at i-drag para igalaw. I-double-tap para ibalik.',loading:'Binubuksan ang larawan…',error:'Hindi mabuksan ang larawan. Pakisubukang muli.'},
-    en: {title:'Watch photo',close:'Close',zoomIn:'Zoom in',zoomOut:'Zoom out',reset:'Reset',zoom:'Image zoom',hint:'Pinch to zoom and drag to move. Double-tap to reset.',loading:'Opening photo…',error:'This photo could not be opened. Please try again.'}
+    fil: {title:'Larawan ng relo',close:'Isara',zoomIn:'Palakihin',zoomOut:'Paliitin',reset:'Ibalik',previous:'Nakaraang larawan',next:'Susunod na larawan',zoom:'Laki ng larawan',hint:'I-pinch para palakihin at i-drag para igalaw. I-double-tap para ibalik.',loading:'Binubuksan ang larawan…',error:'Hindi mabuksan ang larawan. Pakisubukang muli.'},
+    en: {title:'Watch photo',close:'Close',zoomIn:'Zoom in',zoomOut:'Zoom out',reset:'Reset',previous:'Previous photo',next:'Next photo',zoom:'Image zoom',hint:'Pinch to zoom and drag to move. Double-tap to reset.',loading:'Opening photo…',error:'This photo could not be opened. Please try again.'}
   };
   const MAX_ZOOM = 6;
-  let dialog, stage, photo, status, title, hint, closeButton, plusButton, minusButton, resetButton, zoomLevel;
+  let dialog, stage, photo, status, title, hint, closeButton, plusButton, minusButton, resetButton, zoomLevel, previousButton, nextButton;
   let language = 'fil', scale = 1, x = 0, y = 0, fittedWidth = 0, fittedHeight = 0;
   let loaded = false, failed = false, request = 0, gesture = null, lastTap = null, restore = null;
+  let gallery = [], imageIndex = 0, onChange = null, onClose = null;
   const pointers = new Map();
   const words = () => WORDS[language];
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -58,8 +59,14 @@
     paint();
   }
 
+  function clearPointers() {
+    const captured = [...pointers.keys()];
+    pointers.clear(); gesture = null; lastTap = null;
+    captured.forEach(id => { if (stage.hasPointerCapture(id)) stage.releasePointerCapture(id); });
+  }
+
   function reset() {
-    scale = 1; x = 0; y = 0; gesture = null; lastTap = null; paint();
+    clearPointers(); scale = 1; x = 0; y = 0; paint();
   }
 
   function zoomTo(next, anchor = {x:0, y:0}) {
@@ -91,7 +98,7 @@
   }
 
   function pointerDown(event) {
-    if (!loaded || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    if (!dialog.open || !loaded || (event.pointerType === 'mouse' && event.button !== 0)) return;
     event.preventDefault();
     pointers.set(event.pointerId,{x:event.clientX,y:event.clientY,startX:event.clientX,startY:event.clientY,startTime:performance.now(),moved:false,multi:false,type:event.pointerType});
     stage.setPointerCapture(event.pointerId);
@@ -141,6 +148,10 @@
     plusButton.setAttribute('aria-label',copy.zoomIn); plusButton.title = copy.zoomIn;
     minusButton.setAttribute('aria-label',copy.zoomOut); minusButton.title = copy.zoomOut;
     resetButton.textContent = copy.reset;
+    previousButton.setAttribute('aria-label',copy.previous); previousButton.title = copy.previous;
+    nextButton.setAttribute('aria-label',copy.next); nextButton.title = copy.next;
+    previousButton.hidden = imageIndex <= 0;
+    nextButton.hidden = imageIndex >= gallery.length - 1;
     stage.setAttribute('aria-label',copy.title);
     status.textContent = failed ? copy.error : copy.loading;
     paint();
@@ -158,11 +169,56 @@
     window.scrollTo({left:previous.left,top:previous.top,behavior:'instant'});
   }
 
-  function close() {
-    if (!dialog || !dialog.open) return;
-    request++; pointers.clear(); gesture = null; lastTap = null;
-    dialog.close();
+  function finishClose() {
+    if (!restore && !gallery.length) return;
+    const callback = onClose;
+    onChange = null; onClose = null; gallery = []; imageIndex = 0;
+    request++; loaded = false; failed = false;
+    reset();
+    fittedWidth = 0; fittedHeight = 0;
+    photo.hidden = true; photo.removeAttribute('src');
+    previousButton.hidden = true; nextButton.hidden = true;
     restorePosition();
+    if (callback) callback();
+  }
+
+  function close() {
+    if (!dialog) return;
+    if (dialog.open) dialog.close();
+    finishClose();
+  }
+
+  function navigate(index) {
+    if (!dialog.open || index < 0 || index >= gallery.length || index === imageIndex) return;
+    imageIndex = index;
+    showImage();
+    if (document.activeElement === previousButton && previousButton.hidden) nextButton.focus({preventScroll:true});
+    if (document.activeElement === nextButton && nextButton.hidden) previousButton.focus({preventScroll:true});
+    if (onChange) onChange(imageIndex);
+  }
+
+  function showImage() {
+    const selected = gallery[imageIndex];
+    const candidates = sources(selected.url);
+    const currentRequest = ++request;
+    loaded = false; failed = false;
+    reset(); fittedWidth = 0; fittedHeight = 0;
+    photo.hidden = true; photo.removeAttribute('src'); photo.alt = selected.alt || words().title;
+    status.hidden = false;
+    translate();
+    function attempt(index) {
+      if (currentRequest !== request || !dialog.open) return;
+      if (index >= candidates.length) { failed = true; translate(); return; }
+      const next = new Image();
+      next.id = 'viewerImage'; next.className = 'viewer-image'; next.alt = selected.alt || words().title; next.draggable = false;
+      next.onload = () => {
+        if (currentRequest !== request || !dialog.open) return;
+        photo.replaceWith(next); photo = next; loaded = true; status.hidden = true; fit();
+      };
+      next.onerror = () => attempt(index+1);
+      next.src = candidates[index];
+    }
+    attempt(0);
   }
 
   function create() {
@@ -171,17 +227,21 @@
     dialog.id = 'imageViewer'; dialog.className = 'image-viewer';
     dialog.setAttribute('aria-labelledby','viewerTitle');
     dialog.setAttribute('aria-describedby','viewerHint');
-    dialog.innerHTML = '<div class="viewer-header"><h2 id="viewerTitle"></h2><button id="viewerClose" type="button" autofocus></button></div><div class="viewer-toolbar"><button id="viewerZoomOut" type="button">−</button><span id="viewerZoomLevel"></span><button id="viewerZoomIn" type="button">+</button><button id="viewerReset" type="button"></button></div><p id="viewerHint" class="viewer-hint"></p><div id="viewerStage" class="viewer-stage" tabindex="0"><p id="viewerStatus" role="status"></p><img id="viewerImage" class="viewer-image" alt="" hidden></div>';
+    dialog.innerHTML = '<div class="viewer-header"><h2 id="viewerTitle"></h2><button id="viewerClose" type="button" autofocus></button></div><div class="viewer-toolbar"><button id="viewerPrev" class="viewer-navigation" type="button" hidden>‹</button><button id="viewerZoomOut" type="button">−</button><span id="viewerZoomLevel"></span><button id="viewerZoomIn" type="button">+</button><button id="viewerReset" type="button"></button><button id="viewerNext" class="viewer-navigation" type="button" hidden>›</button></div><p id="viewerHint" class="viewer-hint"></p><div id="viewerStage" class="viewer-stage" tabindex="0"><p id="viewerStatus" role="status"></p><img id="viewerImage" class="viewer-image" alt="" hidden></div>';
     document.body.append(dialog);
     const find = id => dialog.querySelector(`#${id}`);
     stage=find('viewerStage');photo=find('viewerImage');status=find('viewerStatus');title=find('viewerTitle');hint=find('viewerHint');
     closeButton=find('viewerClose');plusButton=find('viewerZoomIn');minusButton=find('viewerZoomOut');resetButton=find('viewerReset');zoomLevel=find('viewerZoomLevel');
+    previousButton=find('viewerPrev');nextButton=find('viewerNext');
     closeButton.addEventListener('click',close);
     plusButton.addEventListener('click',() => zoomTo(scale*1.5));
     minusButton.addEventListener('click',() => zoomTo(scale/1.5));
     resetButton.addEventListener('click',reset);
+    previousButton.addEventListener('click',() => navigate(imageIndex-1));
+    nextButton.addEventListener('click',() => navigate(imageIndex+1));
     dialog.addEventListener('cancel',event => { event.preventDefault(); close(); });
-    dialog.addEventListener('close',restorePosition);
+    // Native close events are queued. An old event must not clear a reopened viewer.
+    dialog.addEventListener('close',() => { if (!dialog.open) finishClose(); });
     stage.addEventListener('pointerdown',pointerDown);
     stage.addEventListener('pointermove',pointerMove);
     stage.addEventListener('pointerup',pointerEnd);
@@ -205,12 +265,11 @@
   function open(options = {}) {
     create();
     language = options.language === 'en' ? 'en' : 'fil';
-    const candidates = sources(options.url);
-    const currentRequest = ++request;
-    loaded = false; failed = false; pointers.clear(); gesture = null; lastTap = null;
-    scale = 1; x = 0; y = 0; fittedWidth = 0; fittedHeight = 0;
-    photo.hidden = true; photo.removeAttribute('src'); photo.alt = options.alt || words().title;
-    status.hidden = false;
+    gallery = (Array.isArray(options.images) && options.images.length ? options.images : [{url:options.url,alt:options.alt}])
+      .map(item => ({url:item && item.url,alt:item && item.alt}));
+    imageIndex = clamp(Number.isInteger(options.index) ? options.index : 0,0,gallery.length-1);
+    onChange = typeof options.onChange === 'function' ? options.onChange : null;
+    onClose = typeof options.onClose === 'function' ? options.onClose : null;
     if (!dialog.open) {
       const focus = document.activeElement;
       const scrollers = [];
@@ -229,20 +288,7 @@
       dialog.showModal();
       closeButton.focus({preventScroll:true});
     }
-    translate();
-    function attempt(index) {
-      if (currentRequest !== request || !dialog.open) return;
-      if (index >= candidates.length) { failed = true; translate(); return; }
-      const next = new Image();
-      next.id = 'viewerImage'; next.className = 'viewer-image'; next.alt = options.alt || words().title; next.draggable = false;
-      next.onload = () => {
-        if (currentRequest !== request || !dialog.open) return;
-        photo.replaceWith(next); photo = next; loaded = true; status.hidden = true; fit();
-      };
-      next.onerror = () => attempt(index+1);
-      next.src = candidates[index];
-    }
-    attempt(0);
+    showImage();
   }
 
   window.ImageViewer = Object.freeze({open,close,setLanguage(value) { language = value === 'en' ? 'en' : 'fil'; translate(); }});

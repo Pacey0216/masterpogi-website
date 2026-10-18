@@ -9,7 +9,8 @@
 #imageViewer button:disabled{opacity:.4;cursor:default}
 #imageViewer button:focus-visible,#imageViewer .viewer-stage:focus-visible{outline:3px solid #3689c0;outline-offset:-3px}
 #imageViewer #viewerClose{font-weight:600;white-space:nowrap}
-#imageViewer .viewer-toolbar{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px 0;flex-shrink:0}
+#imageViewer .viewer-toolbar{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px 0;flex-shrink:0;flex-wrap:wrap}
+#imageViewer .viewer-navigation{min-width:44px;min-height:44px;font-size:30px;padding:4px 10px;flex-shrink:0}
 #imageViewer #viewerZoomIn,#imageViewer #viewerZoomOut{font-size:23px}
 #imageViewer #viewerZoomLevel{min-width:47px;font-size:13px;text-align:center;font-variant-numeric:tabular-nums}
 #imageViewer .viewer-hint{margin:0;padding:7px 12px 9px;text-align:center;font-size:12px;line-height:1.4;color:#686060;flex-shrink:0}
