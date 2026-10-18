@@ -10,8 +10,6 @@ window.STORE_CONFIG = {
   "email": "kidaweeda977@yahoo.com",
   "whatsappDisplay": "+63 906 160 6316",
   "whatsappUrl": "https://wa.me/639061606316",
-  "currency": "PHP",
-  "locale": "en-PH",
   "refreshIntervalMs": 60000,
   "sampleMode": false
 };

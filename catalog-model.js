@@ -55,7 +55,6 @@
     return grades.filter(item => item.stock > 0).map(item => ({
       sku: text(product.sku || product.productId || product.reference),
       grade: item.grade, size, stock: item.stock,
-      price: number(product.gradePrices?.[item.grade]) || number(product.price),
       photos: emptyPhotos(), photoSource: '', legacy: true
     }));
   }
@@ -68,7 +67,6 @@
       return {
         sku: text(v.sku || v.variantSku || product.sku || product.productId || product.reference),
         grade, size: sizeName(v.size), stock: number(v.stock),
-        price: numeric(v.price) ? number(v.price) : number(product.gradePrices?.[grade]) || number(product.price),
         photos: uploadedPhotos(v), photoSource: v.photoSource === 'form-upload-order' ? v.photoSource : '',
         ...(v.legacy ? {legacy: true} : {})
       };
@@ -98,10 +96,10 @@
       if (!name || !sku) continue;
       const brand = text(product.brand || product.category) || 'Watch';
       products.push({
-        sku, name, brand, price: Math.min(...variants.map(v => v.price)),
+        sku, name, brand,
         stock: variants.reduce((sum, v) => sum + v.stock, 0),
         sold: number(product.sold), brandSold: totals.get(folded(brand)) || 0, featured: isFeatured(product.featured),
-        variants, specs: publicSpecs(product.specs), description: text(product.description), visible: true
+        variants, specs: publicSpecs(product.specs), visible: true
       });
     }
     return sortCatalog(products);
@@ -128,6 +126,15 @@
   function bestSellers(products) {
     return (Array.isArray(products) ? products : []).filter(p => visible(p) && number(p.stock) > 0 && number(p.sold) > 0 && availableVariants(p).length).slice().sort((a, b) => number(b.sold) - number(a.sold) || alpha(a.name, b.name) || alpha(a.brand, b.brand) || alpha(a.sku, b.sku));
   }
+  function paginateProducts(products, page = 1, pageSize = 24) {
+    const list = Array.isArray(products) ? products : [];
+    const requestedSize = Math.floor(Number(pageSize));
+    const size = Number.isFinite(requestedSize) && requestedSize > 0 ? requestedSize : 24;
+    const total = list.length, totalPages = Math.max(1, Math.ceil(total / size));
+    const requestedPage = Math.floor(Number(page));
+    const currentPage = Math.min(totalPages, Math.max(1, Number.isFinite(requestedPage) ? requestedPage : 1));
+    return {items: list.slice((currentPage - 1) * size, currentPage * size), page: currentPage, totalPages, total};
+  }
   function featuredProducts(products) {
     // The Products sheet controls inclusion; recorded sales only control order.
     // A zero-sale featured watch remains eligible without a bestseller claim.
@@ -143,9 +150,9 @@
   }
   function comparisonEligibility(a, b) {
     if (!a?.product || !a?.variant || !b?.product || !b?.variant) return {allowed: false, reason: 'select-two'};
-    if (selectionKey(a.product, a.variant) === selectionKey(b.product, b.variant)) return {allowed: false, reason: 'duplicate'};
-    const allowed = folded(a.product.brand) !== folded(b.product.brand) || folded(gradeName(a.variant.grade)) !== folded(gradeName(b.variant.grade));
-    return {allowed, reason: allowed ? '' : 'same-brand-and-grade'};
+    const sku = selection => folded(selection.variant.sku || selection.variant.variantSku || selection.product.sku).replace(/\s+/g, ' ');
+    if (sku(a) === sku(b)) return {allowed: false, reason: 'duplicate'};
+    return {allowed: true, reason: ''};
   }
-  return Object.freeze({normalizeInventory, availableVariants, sortCatalog, filterProducts, bestSellers, featuredProducts, selectionKey, photosForVariant, comparisonEligibility});
+  return Object.freeze({normalizeInventory, availableVariants, sortCatalog, filterProducts, bestSellers, featuredProducts, paginateProducts, selectionKey, photosForVariant, comparisonEligibility});
 });

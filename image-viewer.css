@@ -1,0 +1,21 @@
+/* A separate top-layer dialog keeps the product or comparison position intact. */
+#imageViewer{width:min(1100px,calc(100vw - 24px));height:min(900px,calc(100dvh - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);margin:auto;padding:0;border:1px solid #d8d0d0;border-radius:10px;background:#fff;color:#292323;overflow:hidden;overscroll-behavior:contain}
+#imageViewer[open]{display:flex;flex-direction:column}
+#imageViewer [hidden]{display:none!important}
+#imageViewer::backdrop{background:#171313b8}
+#imageViewer .viewer-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid #e8e1e1;flex-shrink:0}
+#imageViewer .viewer-header h2{font-size:17px;line-height:1.3;margin:0}
+#imageViewer button{min-width:40px;min-height:40px;border:1px solid #d8d0d0;border-radius:5px;background:#fff;color:#5a2020;padding:7px 11px;font:inherit;font-size:14px;line-height:24px;cursor:pointer;touch-action:manipulation}
+#imageViewer button:disabled{opacity:.4;cursor:default}
+#imageViewer button:focus-visible,#imageViewer .viewer-stage:focus-visible{outline:3px solid #3689c0;outline-offset:-3px}
+#imageViewer #viewerClose{font-weight:600;white-space:nowrap}
+#imageViewer .viewer-toolbar{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px 0;flex-shrink:0}
+#imageViewer #viewerZoomIn,#imageViewer #viewerZoomOut{font-size:23px}
+#imageViewer #viewerZoomLevel{min-width:47px;font-size:13px;text-align:center;font-variant-numeric:tabular-nums}
+#imageViewer .viewer-hint{margin:0;padding:7px 12px 9px;text-align:center;font-size:12px;line-height:1.4;color:#686060;flex-shrink:0}
+#imageViewer .viewer-stage{position:relative;flex:1;min-height:0;overflow:hidden;background:#f7f5f5;touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:contain}
+#imageViewer .viewer-stage.is-zoomed{cursor:grab}
+#imageViewer .viewer-stage.is-dragging{cursor:grabbing}
+#imageViewer .viewer-image{position:absolute;left:50%;top:50%;display:block;max-width:none;max-height:none;padding:0;object-fit:contain;transform-origin:center;pointer-events:none;user-select:none;-webkit-user-select:none;will-change:transform}
+#imageViewer #viewerStatus{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;margin:0;text-align:center;font-size:14px;color:#686060}
+@media(max-width:600px){#imageViewer{width:calc(100vw - 12px);height:calc(100dvh - 12px);max-width:calc(100vw - 12px);max-height:calc(100dvh - 12px);border-radius:7px}#imageViewer .viewer-header{padding:8px}#imageViewer .viewer-header h2{font-size:15px}#imageViewer .viewer-toolbar{padding-top:7px;gap:7px}#imageViewer .viewer-hint{font-size:11px;padding:6px 10px 8px}}
