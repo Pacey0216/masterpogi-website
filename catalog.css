@@ -44,7 +44,7 @@ p{overflow-wrap:anywhere}
 .filters label{min-width:0}
 .filters input,.filters select,.variant-fields select,.comparison-controls select{width:100%;min-width:0;height:42px;border:1px solid #d2cbcb;border-radius:5px;background:#fff;padding:7px 9px;font-size:14px}
 .product-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.product-card{min-width:0;align-self:start;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#fff;display:flex;flex-direction:column}
+.product-card{min-width:0;width:100%;max-width:240px;justify-self:center;align-self:start;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#fff;display:flex;flex-direction:column}
 .card-open{display:block;text-align:left;width:100%;border:0;padding:8px;border-radius:0;min-width:0;line-height:1.35}
 .product-name{font-weight:600;font-size:15px;line-height:1.35;overflow-wrap:anywhere}
 .photo-open,.listing-image{display:block;width:100%;border:0;border-radius:0;padding:0;background:#f8f8f8}
@@ -53,6 +53,10 @@ p{overflow-wrap:anywhere}
 .photo-open:disabled{opacity:1;cursor:default}
 .photo-frame{background:#f8f8f8;position:relative;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;width:100%;overflow:hidden}
 .photo-frame img{display:block;width:100%;height:100%;object-fit:contain;padding:3%;mix-blend-mode:multiply}
+.listing-image .photo-frame{aspect-ratio:3/4}
+.listing-image .photo-frame img{padding:0;mix-blend-mode:normal}
+.card-stock{padding:0 8px 6px;font-size:12px;line-height:1.4}
+.card-inquiry{margin:0 8px 8px;padding:7px 5px;border-color:var(--accent);color:var(--accent);font-size:12px;line-height:1.35;min-width:0;overflow-wrap:anywhere}
 .photo-missing{padding:8px;font-size:12px;line-height:1.35;text-align:center;color:var(--muted)}
 .photo-missing span{display:block}
 .photo-missing span:first-child{font-size:24px;color:#a9a2a2}
@@ -131,6 +135,8 @@ footer{border-top:1px solid var(--line);font-size:12px;color:var(--muted);margin
   .product-grid{gap:5px}
   .card-open{padding:6px 4px;font-size:11px}
   .product-name{font-size:11px;line-height:1.35}
+  .card-stock{padding:0 4px 5px;font-size:10px}
+  .card-inquiry{margin:0 4px 6px;padding:6px 2px;font-size:10px}
   .photo-missing{font-size:10px;padding:4px}
   .photo-missing span:first-child{font-size:20px}
   .catalog{margin-top:22px}

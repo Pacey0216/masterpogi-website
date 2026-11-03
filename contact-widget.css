@@ -1,0 +1,29 @@
+/* Scoped contact controls; reserve space for the floating launcher at the footer. */
+body:has(.mp-contact:not([hidden])) footer{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.mp-contact{--mp-contact-surface:#fff;--mp-contact-text:#242222;--mp-contact-muted:#686464;--mp-contact-border:#e1dede;--mp-contact-tint:#fcf0f0;--mp-contact-accent:var(--accent,#b6252d);position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:max(18px,env(safe-area-inset-bottom,0px));z-index:8;display:flex;flex-direction:column;align-items:flex-end;gap:12px;font:14px/1.4 Arial,Helvetica,sans-serif;color:var(--mp-contact-text)}
+.mp-contact[hidden],.mp-contact [hidden]{display:none!important}
+.mp-contact button,.mp-contact a{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.mp-contact button:focus-visible,.mp-contact a:focus-visible{outline:3px solid #3689c0;outline-offset:3px}
+.mp-contact-panel{width:min(320px,calc(100vw - 36px));max-height:calc(100dvh - 110px);overflow:auto;overscroll-behavior:contain;border:1px solid var(--mp-contact-border);border-radius:14px;background:var(--mp-contact-surface);box-shadow:0 8px 32px #24222226}
+.mp-contact-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-bottom:1px solid var(--mp-contact-border)}
+.mp-contact-brand{margin:0 0 3px;color:var(--mp-contact-accent);font-size:12px;font-weight:700;letter-spacing:.3px}
+.mp-contact-heading h2{margin:0;font-size:18px;line-height:1.3;letter-spacing:0;color:var(--mp-contact-text)}
+.mp-contact-close{flex-shrink:0;width:36px;height:36px;padding:0;border:1px solid var(--mp-contact-border);border-radius:50%;background:var(--mp-contact-surface);color:var(--mp-contact-text);font-size:25px;line-height:1;cursor:pointer}
+.mp-contact-close:hover{background:var(--mp-contact-tint)}
+.mp-contact-links{padding:7px}
+.mp-contact-link{display:flex;align-items:center;gap:12px;min-height:68px;padding:10px;border-radius:8px;color:var(--mp-contact-text);text-decoration:none}
+.mp-contact-link[href]:hover{background:var(--mp-contact-tint)}
+.mp-contact-link>span:nth-child(2){min-width:0}
+.mp-contact-link strong{display:block;font-size:13px;font-weight:600;overflow-wrap:anywhere;line-height:1.5}
+.mp-contact-kind{display:block;color:var(--mp-contact-muted);font-size:12px}
+.mp-contact-icon{display:grid;place-items:center;flex-shrink:0;width:36px;height:36px;background:var(--mp-contact-tint);border-radius:50%;color:var(--mp-contact-accent)}
+.mp-contact-icon svg{width:20px;height:20px}
+.mp-contact-external{margin-left:auto;color:var(--mp-contact-muted)}
+.mp-contact-toggle{display:flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:12px 18px;border:1px solid #9d2027;border-radius:999px;background:var(--mp-contact-accent);color:#fff;box-shadow:0 4px 18px #53131830;font:600 14px/1.4 Arial,Helvetica,sans-serif;cursor:pointer;white-space:nowrap}
+.mp-contact-toggle:hover{background:#9d2027}
+.mp-contact-bubble{width:22px;height:22px;flex-shrink:0}
+@media(max-width:480px){.mp-contact{right:max(12px,env(safe-area-inset-right,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));gap:10px}.mp-contact-panel{width:min(310px,calc(100vw - 24px))}.mp-contact-toggle{min-height:46px;padding:11px 15px;font-size:13px}.mp-contact-heading{padding:14px}}
+@media(prefers-color-scheme:dark){.mp-contact{--mp-contact-surface:#262222;--mp-contact-text:#faf6f6;--mp-contact-muted:#cec3c3;--mp-contact-border:#514646;--mp-contact-tint:#412c2e;--mp-contact-accent:#e96870}.mp-contact-toggle{background:#b6252d}.mp-contact-toggle:hover{background:#9d2027}}
+html[data-theme="light"] .mp-contact{--mp-contact-surface:#fff;--mp-contact-text:#242222;--mp-contact-muted:#686464;--mp-contact-border:#e1dede;--mp-contact-tint:#fcf0f0;--mp-contact-accent:#b6252d}
+html[data-theme="dark"] .mp-contact{--mp-contact-surface:#262222;--mp-contact-text:#faf6f6;--mp-contact-muted:#cec3c3;--mp-contact-border:#514646;--mp-contact-tint:#412c2e;--mp-contact-accent:#e96870}
+html[data-theme="dark"] .mp-contact-toggle{background:#b6252d}

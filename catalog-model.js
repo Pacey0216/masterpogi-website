@@ -29,7 +29,9 @@
     return Object.fromEntries(Object.entries(specs).filter(([key, value]) => publicSpecNames.has(key) && ['string', 'number'].includes(typeof value)).map(([key, value]) => [key, text(value)]));
   }
   function uploadedPhotos(variant) {
-    if (!variant || variant.photoSource !== 'form-upload-order' || !Array.isArray(variant.photos)) return emptyPhotos();
+    // The API supplies the exact variant's upload slots. Its source marker has
+    // changed between deployments; the slots, rather than that marker, are data.
+    if (!variant || !Array.isArray(variant.photos)) return emptyPhotos();
     const seen = new Set();
     return Array.from({length: 4}, (_, index) => {
       const candidate = text(typeof variant.photos[index] === 'string' ? variant.photos[index] : variant.photos[index]?.url);
@@ -42,35 +44,23 @@
       return candidate;
     });
   }
-  function legacyVariants(product) {
-    // Old APIs have aggregate grade stock but no grade-to-size relationship. A
-    // list of sizes must never be expanded into invented purchasable variants.
-    const stock = number(product.stock);
-    if (!stock) return [];
-    const sizeValues = text(product.size || product.specs?.['Available Sizes']).split(/[,;|]/).map(sizeName).filter(Boolean);
-    const size = sizeValues.length === 1 ? sizeValues[0] : '';
-    const gradeText = text(product.grade);
-    const matches = [...gradeText.matchAll(/([^·,;|()]+)\s*\((\d+(?:\.\d+)?)\)/g)];
-    const grades = matches.length ? matches.map(match => ({grade: gradeName(match[1]), stock: number(match[2])})) : [{grade: /^available$/i.test(gradeText) ? '' : gradeName(gradeText), stock}];
-    return grades.filter(item => item.stock > 0).map(item => ({
-      sku: text(product.sku || product.productId || product.reference),
-      grade: item.grade, size, stock: item.stock,
-      photos: emptyPhotos(), photoSource: '', legacy: true
-    }));
-  }
   function availableVariants(product) {
     if (!product || !visible(product)) return [];
     const records = Array.isArray(product.variants) ? product.variants : [];
-    if (!records.length) return legacyVariants(product);
-    return records.filter(v => v && typeof v === 'object' && visible(v) && number(v.stock) > 0).map(v => {
+    const seen = new Set(), variants = [];
+    for (const v of records) {
+      if (!v || typeof v !== 'object' || !visible(v) || !numeric(v.stock) || number(v.stock) <= 0) continue;
+      const sku = text(v.sku || v.variantSku), identity = folded(sku);
+      if (!sku || seen.has(identity)) continue;
+      seen.add(identity);
       const grade = gradeName(v.grade);
-      return {
-        sku: text(v.sku || v.variantSku || product.sku || product.productId || product.reference),
+      variants.push({
+        sku,
         grade, size: sizeName(v.size), stock: number(v.stock),
-        photos: uploadedPhotos(v), photoSource: v.photoSource === 'form-upload-order' ? v.photoSource : '',
-        ...(v.legacy ? {legacy: true} : {})
-      };
-    });
+        photos: uploadedPhotos(v), photoSource: text(v.photoSource)
+      });
+    }
+    return variants;
   }
   function brandTotals(products) {
     const totals = new Map();
@@ -89,10 +79,10 @@
     const raw = source.filter(p => p && typeof p === 'object');
     const totals = brandTotals(raw), products = [];
     for (const product of raw) {
-      if (!visible(product) || (numeric(product.stock) && number(product.stock) <= 0)) continue;
+      if (!visible(product)) continue;
       const variants = availableVariants(product);
       if (!variants.length) continue;
-      const name = text(product.name), sku = text(product.sku || product.productId || product.reference || name);
+      const name = text(product.name), sku = text(product.sku || product.productId || product.reference);
       if (!name || !sku) continue;
       const brand = text(product.brand || product.category) || 'Watch';
       products.push({
@@ -154,5 +144,9 @@
     if (sku(a) === sku(b)) return {allowed: false, reason: 'duplicate'};
     return {allowed: true, reason: ''};
   }
-  return Object.freeze({normalizeInventory, availableVariants, sortCatalog, filterProducts, bestSellers, featuredProducts, paginateProducts, selectionKey, photosForVariant, comparisonEligibility});
+  function inquiryText(variant) {
+    const sku = text(variant?.sku || variant?.variantSku);
+    return sku ? 'how much for this product SKU ' + sku + '?' : '';
+  }
+  return Object.freeze({normalizeInventory, availableVariants, sortCatalog, filterProducts, bestSellers, featuredProducts, paginateProducts, selectionKey, photosForVariant, comparisonEligibility, inquiryText});
 });

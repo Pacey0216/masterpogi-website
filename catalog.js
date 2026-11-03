@@ -6,9 +6,9 @@
   let productReturn=null;
   let savedLanguage='fil';
   try { if(localStorage.getItem(languageKey)==='en') savedLanguage='en'; } catch {}
-  const state={language:savedLanguage,products:[],page:1,selections:[],active:null,variant:null,editKey:null,photo:0,
+  const state={language:savedLanguage,products:[],page:1,selections:[],active:null,variant:null,detailGrade:null,detailSize:null,editKey:null,photo:0,
     comparisonOpen:false,comparisonReturnY:0,lastLoaded:0,loading:false,loadError:false,
-    detailMessage:'',trayMessage:'',failedPhotos:new Set()};
+    detailMessage:'',detailInquiryFallback:'',trayMessage:'',trayInquiryFallback:'',failedPhotos:new Set()};
   const COPY={
     fil:{
       title:'Mga Relo · Master Pogi',meta:'Mga available na relo ng Master Pogi. Pumili, ikumpara, at magtanong sa Messenger.',
@@ -21,7 +21,7 @@
       allBrands:'Lahat ng brand',allGrades:'Lahat ng grade',available:'Available',loading:'Kinukuha ang mga relo…',
       loadFailed:'Hindi makuha ang mga relo. Subukan muli.',stale:'Hindi ma-refresh. Huling matagumpay na bilang ang ipinapakita.',
       updated:time=>'Na-update '+time+' · Awtomatikong nagre-refresh',
-      count:(n,total)=>n+' relo'+(n!==total?' sa '+total:''),stock:n=>'May '+n+' piraso',
+      count:(n,total)=>n+' relo'+(n!==total?' sa '+total:''),stock:n=>'May '+n+' piraso',totalStock:n=>'Kabuuang available: '+n,
       view:name=>'Tingnan ang detalye ng '+name,zoom:name=>'Palakihin ang larawan ng '+name,
       photoDescription:(name,grade,size,index)=>name+' · '+grade+' · '+size+' · larawan '+(index+1),
       photoGroup:'Mga larawan ng napiling relo',noPhoto:'Wala pang larawan',notListed:'Hindi nakatala',
@@ -31,10 +31,11 @@
       duplicate:'Napili na ang SKU na ito. Pumili ng ibang relo, grade, o sukat.',limit:'Dalawa na ang napili. Alisin muna ang isa bago magdagdag.',
       ready:'Handa nang ikumpara.',pickAnother:'Pumili pa ng isang relo, grade, o sukat.',removed:'Inalis ang relo.',removedUnavailable:'Inalis ang relong hindi na available.',
       unavailableTitle:'Hindi na available',unavailableBody:'Hindi na available ang relong ito. Isara at pumili ng iba.',
-      variantChanged:'Hindi na available ang dating pinili. Ipinapakita ang available na grade at sukat; suriin bago magpatuloy.',
+      variantChanged:'Hindi na available ang dating pinili. Piliin muli ang available na grade at sukat.',
+      chooseVariant:'Piliin ang grade at sukat para makita ang eksaktong stock at SKU.',chooseGrade:'Pumili ng grade',chooseSize:'Pumili ng sukat',chooseSku:'Pumili ng SKU',
+      inquiryCopied:'Nakopya ang mensahe. I-paste ito sa Messenger.',copyInquiryManually:'Kopyahin ang mensaheng ito at i-paste sa Messenger:',
       productDisclosure:'Replica ang lahat ng relong ibinebenta rito; hindi authentic na produkto ng mga tatak na binanggit. Ang Japan, Swiss, at Super C (1:1) ay mga kategorya ng grade ng nagbebenta, hindi sertipikasyon ng tatak o patunay ng bansang pinagmulan.',
       footerDisclaimer:'Ang mga pangalan, trademark, at logo ng ibang tatak ay pag-aari ng kani-kanilang may-ari. Independent na nagbebenta ang Master Pogi at walang kaugnayan, sponsorship, o endorsement mula sa mga tatak na ito. Ginagamit ang mga pangalan upang makatulong sa pagkilala at pagkumpara ng mga listing.',
-      inquiry:'Hi! Magkano po ito at available pa?',
       requestTitle:'Hindi mo makita ang hinahanap mong relo?',
       requestMessage:'I-message sa amin ang larawan o model na gusto mo. Kung wala pa kaming stock, maaari naming itanong sa manufacturer kung puwedeng i-order.',
       requestButton:'Mag-request ng Relo',
@@ -52,7 +53,7 @@
       allBrands:'All brands',allGrades:'All grades',available:'Available',loading:'Loading watches…',
       loadFailed:'Watches could not be loaded. Please try again.',stale:'Could not refresh. Showing the last successful stock update.',
       updated:time=>'Updated '+time+' · Refreshes automatically',
-      count:(n,total)=>n+' watch'+(n===1?'':'es')+(n!==total?' of '+total:''),stock:n=>n+' available',
+      count:(n,total)=>n+' watch'+(n===1?'':'es')+(n!==total?' of '+total:''),stock:n=>n+' available',totalStock:n=>'Total available: '+n,
       view:name=>'View details for '+name,zoom:name=>'Enlarge photo of '+name,
       photoDescription:(name,grade,size,index)=>name+' · '+grade+' · '+size+' · photo '+(index+1),
       photoGroup:'Selected watch photos',noPhoto:'No photo available yet',notListed:'Not listed',
@@ -62,10 +63,11 @@
       duplicate:'This SKU is already selected. Choose a different watch, grade, or size.',limit:'Two watches are selected. Remove one before adding another.',
       ready:'Ready to compare.',pickAnother:'Choose one more watch, grade, or size.',removed:'Watch removed.',removedUnavailable:'A watch that is no longer available was removed.',
       unavailableTitle:'No longer available',unavailableBody:'This watch is no longer available. Close this window and choose another.',
-      variantChanged:'Your previous choice is no longer available. An available grade and size are shown; check them before continuing.',
+      variantChanged:'Your previous choice is no longer available. Choose an available grade and size again.',
+      chooseVariant:'Choose a grade and size to see its exact stock and SKU.',chooseGrade:'Choose a grade',chooseSize:'Choose a size',chooseSku:'Choose a SKU',
+      inquiryCopied:'Message copied. Paste it in Messenger.',copyInquiryManually:'Copy this message and paste it in Messenger:',
       productDisclosure:'All watches sold here are replicas, not authentic products of the named brands. Japan, Swiss, and Super C (1:1) are seller grade categories, not brand certifications or proof of country of origin.',
       footerDisclaimer:'Third-party names, trademarks, and logos belong to their respective owners. Master Pogi is an independent seller and is not affiliated with, sponsored by, or endorsed by those brands. Product references are provided to help buyers identify and compare listings.',
-      inquiry:'Hi! What is the price, and is this still available?',
       requestTitle:'Can’t find the watch you’re looking for?',
       requestMessage:'Send us a photo or model you want. If we don’t have it in stock, we can check with the manufacturer if it can be ordered.',
       requestButton:'Request a Watch',
@@ -129,8 +131,8 @@
   function card(p,bestSeller=false,eager=false){
     const v=bestSeller?variants(p)[0]:representative(p),article=document.createElement('article');
     article.className='product-card';article.dataset.sku=p.sku;
-    article.innerHTML='<button type="button" class="listing-image" aria-label="'+esc(t('view',p.name))+'">'+photo(p,v,initialPhoto(p,v),eager)+'</button><button type="button" class="card-open" aria-label="'+esc(t('view',p.name))+'"><span class="product-name">'+esc(p.name)+'</span></button>';
-    article.querySelectorAll('.listing-image,.card-open').forEach(button=>button.onclick=event=>{event.stopPropagation();openProduct(p,v);});
+    article.innerHTML='<button type="button" class="listing-image" aria-label="'+esc(t('view',p.name))+'">'+photo(p,v,initialPhoto(p,v),eager)+'</button><button type="button" class="card-open" aria-label="'+esc(t('view',p.name))+'"><span class="product-name">'+esc(p.name)+'</span></button><p class="stock-status card-stock" data-total-stock="'+p.stock+'">'+esc(t('totalStock',p.stock))+'</p><button type="button" class="card-inquiry">'+esc(t('inquiryButton'))+'</button>';
+    article.querySelectorAll('.listing-image,.card-open,.card-inquiry').forEach(button=>button.onclick=event=>{event.stopPropagation();openProduct(p);});
     enhanceImages(article);return article;
   }
   function renderProducts(){
@@ -172,8 +174,8 @@
     $('retry').hidden=!state.loadError;
   }
   function renderMessages(){
-    if($('detailMessage'))$('detailMessage').textContent=state.detailMessage?t(state.detailMessage):'';
-    $('trayMessage').textContent=state.trayMessage?t(state.trayMessage):'';
+    if($('detailMessage'))$('detailMessage').textContent=(state.detailMessage?t(state.detailMessage):'')+(state.detailMessage==='copyInquiryManually'&&state.detailInquiryFallback?' '+state.detailInquiryFallback:'');
+    $('trayMessage').textContent=(state.trayMessage?t(state.trayMessage):'')+(state.trayMessage==='copyInquiryManually'&&state.trayInquiryFallback?' '+state.trayInquiryFallback:'');
   }
   function applyLanguage(){
     document.documentElement.lang=state.language;document.title=t('title');document.querySelector('meta[name="description"]').content=t('meta');
@@ -183,7 +185,8 @@
     document.querySelectorAll('.language-switch').forEach(el=>el.setAttribute('aria-label',t('language')));
     document.querySelectorAll('[data-language]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.language===state.language)));
     $('productDialog').querySelector('.close-dialog').setAttribute('aria-label',t('closeDetails'));
-    $('requestLink').href=messengerURL(t('requestInquiry'));
+    $('requestLink').href=messengerURL();
+    $('requestLink').onclick=()=>copyMessengerMessage(t('requestInquiry'),$('requestLink'));
     window.ImageViewer?.setLanguage(state.language);
     updateFilterOptions();renderInventoryStatus();renderTop();renderProducts();renderTray();
     if($('productDialog').open){if(state.active)renderProductDetail();else renderUnavailable();}
@@ -227,14 +230,16 @@
       wrap.append(thumbs);enhanceImages(thumbs);
     }
   }
-  function openProduct(p,v=variants(p)[0],editKey=null){
+  function openProduct(p,v=null,editKey=null){
     window.ImageViewer?.close();
     const dialog=$('productDialog');
     if(!dialog.open){
       productReturn={x:scrollX,y:scrollY,focus:document.activeElement,overflow:document.documentElement.style.overflow};
       document.documentElement.style.overflow='hidden';
     }
-    state.active=p;state.variant=v;state.editKey=editKey;state.photo=initialPhoto(p,v);state.detailMessage='';
+    const choices=variants(p);
+    v=v&&choices.find(choice=>key(p,choice)===key(p,v))|| (choices.length===1?choices[0]:null);
+    state.active=p;state.variant=v;state.detailGrade=v?.grade??null;state.detailSize=v?.size??null;state.editKey=editKey;state.photo=initialPhoto(p,v);state.detailMessage='';state.detailInquiryFallback='';
     renderProductDetail();if(!dialog.open){dialog.showModal();dialog.scrollTop=0;}
   }
   function restoreProductPosition(){
@@ -250,25 +255,55 @@
     // Restore synchronously, before an intentional jump to inline comparison.
     restoreProductPosition();
   }
-  function specRows(p,v){return [[t('grade'),gradeLabel(v?.grade)],[t('size'),sizeLabel(v?.size)],['SKU',v?.sku||p.sku]];}
+  function specRows(p,v){return v?[[t('grade'),gradeLabel(v.grade)],[t('size'),sizeLabel(v.size)],['SKU',v.sku]]:[];}
   function extraRows(p){return Object.entries(p.specs||{}).filter(([k])=>Object.hasOwn(t('specs'),k)).map(([k,value])=>[t('specs')[k],value]);}
   function dl(rows){return '<dl class="specs">'+rows.filter(([,v])=>v).map(([k,v])=>'<div><dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>';}
   function options(values,current,label=x=>x,disabled=()=>false){
     return values.map(value=>'<option value="'+esc(value)+'"'+(value===current?' selected':'')+(disabled(value)?' disabled':'')+'>'+esc(label(value))+'</option>').join('');
   }
   function renderProductDetail(){
-    const p=state.active,v=state.variant,vs=variants(p),grades=unique(vs.map(x=>x.grade)),sizes=unique(vs.filter(x=>x.grade===v?.grade).map(x=>x.size));
-    $('productBody').innerHTML='<div class="product-detail"><div id="gallery" class="gallery"></div><div class="detail-info"><h2 id="productTitle">'+esc(p.name)+'</h2><p id="stockStatus" class="stock-status">'+esc(v?t('stock',v.stock):t('unavailableTitle'))+'</p><div class="variant-fields"><label><span>'+esc(t('grade'))+'</span><select id="detailGrade">'+options(grades,v?.grade,gradeLabel)+'</select></label><label><span>'+esc(t('size'))+'</span><select id="detailSize">'+options(sizes,v?.size,sizeLabel)+'</select></label></div><div class="detail-actions"><button id="addComparison" type="button"'+(v?'':' disabled')+'>'+esc(t(state.editKey?'saveCompare':'compare'))+'</button>'+(v?'<a id="inquiryLink" class="primary" href="'+esc(productMessenger(p,v))+'" target="_blank" rel="noopener noreferrer">'+esc(t('inquiryButton'))+'</a>':'')+'</div><p id="detailMessage" class="detail-message" role="status"></p>'+dl([...specRows(p,v),...extraRows(p)])+'</div></div>';
+    const p=state.active,v=state.variant,vs=variants(p),grades=unique(vs.map(x=>x.grade)),sizes=unique(vs.filter(x=>x.grade===state.detailGrade).map(x=>x.size));
+    const matches=vs.filter(x=>x.grade===state.detailGrade&&x.size===state.detailSize);
+    const placeholder=label=>'<option value="">'+esc(t(label))+'</option>';
+    const skuChoice=matches.length>1?'<label><span>SKU</span><select id="detailSku">'+placeholder('chooseSku')+options(matches.map(x=>x.sku),v?.sku)+'</select></label>':'';
+    $('productBody').innerHTML='<div class="product-detail"><div id="gallery" class="gallery"></div><div class="detail-info"><h2 id="productTitle">'+esc(p.name)+'</h2><p id="stockStatus" class="stock-status">'+esc(v?t('stock',v.stock):t('chooseVariant'))+'</p><div class="variant-fields"><label><span>'+esc(t('grade'))+'</span><select id="detailGrade">'+placeholder('chooseGrade')+options(grades,state.detailGrade,gradeLabel)+'</select></label><label><span>'+esc(t('size'))+'</span><select id="detailSize"'+(state.detailGrade===null?' disabled':'')+'>'+placeholder('chooseSize')+options(sizes,state.detailSize,sizeLabel)+'</select></label>'+skuChoice+'</div><div class="detail-actions"><button id="addComparison" type="button"'+(v?'':' disabled')+'>'+esc(t(state.editKey?'saveCompare':'compare'))+'</button>'+(v?'<a id="inquiryLink" class="primary" href="'+esc(productMessenger(p,v))+'" target="_blank" rel="noopener noreferrer">'+esc(t('inquiryButton'))+'</a>':'<button type="button" class="primary" id="chooseInquiryVariant">'+esc(t('inquiryButton'))+'</button>')+'</div><p id="detailMessage" class="detail-message" role="status"></p>'+dl([...specRows(p,v),...extraRows(p)])+'</div></div>';
     const disclaimer=document.createElement('p');disclaimer.className='popup-disclaimer';disclaimer.textContent=t('popupDisclaimer');$('productBody').append(disclaimer);
     renderGallery();renderMessages();
-    $('detailGrade').onchange=e=>{window.ImageViewer?.close();state.variant=vs.find(x=>x.grade===e.target.value&&x.size===state.variant?.size)||vs.find(x=>x.grade===e.target.value);state.photo=initialPhoto(p,state.variant);state.detailMessage='';renderProductDetail();$('detailGrade').focus({preventScroll:true});};
-    $('detailSize').onchange=e=>{window.ImageViewer?.close();state.variant=vs.find(x=>x.grade===state.variant?.grade&&x.size===e.target.value);state.photo=initialPhoto(p,state.variant);state.detailMessage='';renderProductDetail();$('detailSize').focus({preventScroll:true});};
+    const updateChoice=(grade,size,exactSku=null)=>{
+      window.ImageViewer?.close();state.detailGrade=grade;state.detailSize=size;
+      let choices=vs.filter(x=>x.grade===grade&&(size===null||x.size===size));
+      if(exactSku)choices=choices.filter(x=>x.sku===exactSku);
+      state.variant=choices.length===1?choices[0]:null;
+      if(state.variant){state.detailGrade=state.variant.grade;state.detailSize=state.variant.size;}
+      state.photo=initialPhoto(p,state.variant);state.detailMessage='';state.detailInquiryFallback='';renderProductDetail();
+    };
+    $('detailGrade').onchange=e=>{updateChoice(e.target.value||null,null);$('detailGrade').focus({preventScroll:true});};
+    $('detailSize').onchange=e=>{updateChoice(state.detailGrade,e.target.value||null);$('detailSize').focus({preventScroll:true});};
+    if($('detailSku'))$('detailSku').onchange=e=>{updateChoice(state.detailGrade,state.detailSize,e.target.value);$('detailSku')?.focus({preventScroll:true});};
+    if($('chooseInquiryVariant'))$('chooseInquiryVariant').onclick=()=>{state.detailMessage='chooseVariant';renderMessages();$(state.detailGrade===null?'detailGrade':state.detailSize===null?'detailSize':'detailSku')?.focus();};
+    if($('inquiryLink'))$('inquiryLink').onclick=()=>copyMessengerMessage(M.inquiryText(v),$('inquiryLink'));
     $('addComparison').onclick=addComparison;
   }
-  function messengerURL(message){
-    try{const url=new URL(C.messengerUrl);if(url.protocol!=='https:'||!['m.me','www.messenger.com','messenger.com'].includes(url.hostname))return '#';if(message)url.searchParams.set('text',message);return url.href;}catch{return '#';}
+  function messengerURL(){
+    try{const url=new URL(C.messengerUrl);if(url.protocol!=='https:'||!['m.me','www.messenger.com','messenger.com'].includes(url.hostname))return '#';url.searchParams.delete('text');return url.href;}catch{return '#';}
   }
-  function productMessenger(p,v){return messengerURL(t('inquiry')+' '+[p.name,v.sku||p.sku,gradeLabel(v.grade),sizeLabel(v.size)].join(' | '));}
+  function productMessenger(p,v){return variants(p).some(choice=>key(p,choice)===key(p,v))&&M.inquiryText(v)?messengerURL():'#';}
+  async function copyMessengerMessage(message,link){
+    if(!message)return;
+    let copied=false;
+    try{await navigator.clipboard.writeText(message);copied=true;}catch{}
+    if(!link?.isConnected)return;
+    const status=copied?'inquiryCopied':'copyInquiryManually',fallback=copied?'':message;
+    if(link?.id==='inquiryLink'){
+      state.detailMessage=status;state.detailInquiryFallback=fallback;renderMessages();
+    }else if(link?.classList.contains('comparison-messenger')){
+      state.trayMessage=status;state.trayInquiryFallback=fallback;renderMessages();
+    }else if(link){
+      let hint=link.parentElement.querySelector('.inquiry-copy-status');
+      if(!hint){hint=document.createElement('p');hint.className='inquiry-copy-status';hint.setAttribute('role','status');link.after(hint);}
+      hint.textContent=t(status)+(fallback?' '+fallback:'');
+    }
+  }
   function addComparison(){
     if(!state.active||!state.variant)return;
     const candidate={product:state.active,variant:state.variant};
@@ -319,8 +354,14 @@
   function refreshOpenProduct(){
     const p=state.products.find(p=>p.sku===state.active?.sku);
     if(!p){state.active=null;state.variant=null;state.editKey=null;state.photo=0;state.detailMessage='';renderUnavailable();return;}
+    if(!state.variant){
+      state.active=p;
+      if(!variants(p).some(v=>v.grade===state.detailGrade)){state.detailGrade=null;state.detailSize=null;}
+      else if(!variants(p).some(v=>v.grade===state.detailGrade&&v.size===state.detailSize))state.detailSize=null;
+      renderProductDetail();return;
+    }
     const v=variants(p).find(v=>key(p,v)===key(state.active,state.variant));
-    if(!v){window.ImageViewer?.close();state.active=p;state.variant=variants(p)[0];state.editKey=null;state.photo=initialPhoto(p,state.variant);state.detailMessage='variantChanged';renderProductDetail();return;}
+    if(!v){window.ImageViewer?.close();state.active=p;state.variant=null;state.detailGrade=null;state.detailSize=null;state.editKey=null;state.photo=0;state.detailMessage='variantChanged';renderProductDetail();return;}
     if(JSON.stringify(photos(p,v))!==JSON.stringify(photos(state.active,state.variant))){window.ImageViewer?.close();state.photo=initialPhoto(p,v);}
     state.active=p;state.variant=v;renderProductDetail();
   }
@@ -364,6 +405,7 @@
     state.selections.forEach((s,index)=>{
       const details=document.createElement('div');details.className='comparison-details';details.dataset.column=index;details.dataset.sku=s.variant.sku;
       details.innerHTML='<h3>'+esc(s.product.name)+'</h3>'+dl([...specRows(s.product,s.variant),...extraRows(s.product)])+'<a class="primary comparison-messenger" href="'+esc(productMessenger(s.product,s.variant))+'" target="_blank" rel="noopener noreferrer">'+esc(t('inquiryButton'))+'</a>';
+      details.querySelector('.comparison-messenger').onclick=()=>copyMessengerMessage(M.inquiryText(s.variant),details.querySelector('.comparison-messenger'));
       grid.append(details);
     });
     enhanceImages(grid);
