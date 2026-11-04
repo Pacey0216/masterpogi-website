@@ -306,7 +306,12 @@
       return url.origin+url.pathname;
     }catch{return '#';}
   }
-  function productMessenger(p,v){return variants(p).some(choice=>key(p,choice)===key(p,v))&&M.inquiryText(p,v)?messengerURL():'#';}
+  function productMessenger(p,v){
+    const message=M.inquiryText(p,v),base=messengerURL();
+    if(!variants(p).some(choice=>key(p,choice)===key(p,v))||!message||base==='#')return '#';
+    const threadId=new URL(base).pathname.match(/^\/messages\/t\/(\d+)\/?$/)?.[1];
+    return threadId?'https://www.messenger.com/t/'+threadId+'/?text='+encodeURIComponent(message):'#';
+  }
   async function copyMessengerMessage(message,link){
     if(!message)return;
     let copied=false;

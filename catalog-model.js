@@ -146,7 +146,7 @@
   }
   function inquiryText(product, variant) {
     const name = text(product?.name), grade = text(variant?.grade), sku = text(variant?.sku || variant?.variantSku);
-    return name && grade && sku ? 'How much po ' + grade + ' ' + name + '? SKU: ' + sku : '';
+    return name && grade && sku ? 'Hi, how much is this watch SKU ' + sku + '?' : '';
   }
   return Object.freeze({normalizeInventory, availableVariants, sortCatalog, filterProducts, bestSellers, featuredProducts, paginateProducts, selectionKey, photosForVariant, comparisonEligibility, inquiryText});
 });
