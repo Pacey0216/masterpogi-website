@@ -34,7 +34,7 @@
       variantChanged:'Hindi na available ang dating pinili. Piliin muli ang available na grade at sukat.',
       chooseVariant:'Piliin ang grade at sukat para makita ang eksaktong stock at SKU.',chooseGrade:'Pumili ng grade',chooseSize:'Pumili ng sukat',chooseSku:'Pumili ng SKU',
       inquiryCopied:'Nakopya ang mensahe. I-paste ito sa Messenger.',copyInquiryManually:'Kopyahin ang mensaheng ito at i-paste sa Messenger:',
-      inquiryHint:'Kokopyahin ang mensahe sa ibaba. I-paste ito sa Messenger.',
+      inquiryHint:'Kokopyahin ang mensahe kapag pinili mo ang Messenger. I-paste ito roon.',
       requestHint:'Puwedeng magpadala ng larawan ng relo sa Messenger. Hindi kailangang alam mo ang pangalan.',
       productDisclosure:'Replica ang lahat ng relong ibinebenta rito; hindi authentic na produkto ng mga tatak na binanggit. Ang Japan, Swiss, at Super C (1:1) ay mga kategorya ng grade ng nagbebenta, hindi sertipikasyon ng tatak o patunay ng bansang pinagmulan.',
       footerDisclaimer:'Ang mga pangalan, trademark, at logo ng ibang tatak ay pag-aari ng kani-kanilang may-ari. Independent na nagbebenta ang Master Pogi at walang kaugnayan, sponsorship, o endorsement mula sa mga tatak na ito. Ginagamit ang mga pangalan upang makatulong sa pagkilala at pagkumpara ng mga listing.',
@@ -67,7 +67,7 @@
       variantChanged:'Your previous choice is no longer available. Choose an available grade and size again.',
       chooseVariant:'Choose a grade and size to see its exact stock and SKU.',chooseGrade:'Choose a grade',chooseSize:'Choose a size',chooseSku:'Choose a SKU',
       inquiryCopied:'Message copied. Paste it in Messenger.',copyInquiryManually:'Copy this message and paste it in Messenger:',
-      inquiryHint:'Copies the message below. Paste it in Messenger.',
+      inquiryHint:'Selecting Messenger copies your inquiry. Paste it there.',
       requestHint:'Send a watch photo in Messenger. You do not need to know its name.',
       productDisclosure:'All watches sold here are replicas, not authentic products of the named brands. Japan, Swiss, and Super C (1:1) are seller grade categories, not brand certifications or proof of country of origin.',
       footerDisclaimer:'Third-party names, trademarks, and logos belong to their respective owners. Master Pogi is an independent seller and is not affiliated with, sponsored by, or endorsed by those brands. Product references are provided to help buyers identify and compare listings.',
@@ -181,7 +181,7 @@
     $('retry').hidden=!state.loadError;
   }
   function renderMessages(){
-    if($('detailMessage'))$('detailMessage').textContent=(state.detailMessage?t(state.detailMessage):'')+(state.detailMessage==='copyInquiryManually'&&state.detailInquiryFallback?' '+state.detailInquiryFallback:'');
+    if($('detailMessage'))$('detailMessage').textContent=state.detailMessage?t(state.detailMessage):'';
     $('trayMessage').textContent=(state.trayMessage?t(state.trayMessage):'')+(state.trayMessage==='copyInquiryManually'&&state.trayInquiryFallback?' '+state.trayInquiryFallback:'');
   }
   function applyLanguage(){
@@ -276,7 +276,7 @@
     const disclaimer=document.createElement('p');disclaimer.className='popup-disclaimer';disclaimer.textContent=t('popupDisclaimer');$('productBody').append(disclaimer);
     if(p.description){
       const description=document.createElement('p');description.className='product-description';description.textContent=p.description;
-      $('productBody').querySelector('.specs').before(description);
+      $('productBody').querySelector('.detail-actions').after(description);
     }
     renderGallery();renderMessages();
     const updateChoice=(grade,size,exactSku=null)=>{
@@ -294,7 +294,6 @@
     if($('inquiryLink')){
       $('inquiryLink').onclick=()=>copyMessengerMessage(M.inquiryText(p,v),$('inquiryLink'));
       const hint=document.createElement('p');hint.className='hint';hint.textContent=t('inquiryHint');$('inquiryLink').after(hint);
-      const preview=document.createElement('p');preview.className='inquiry-preview';preview.textContent=M.inquiryText(p,v);hint.after(preview);
     }
     $('addComparison').onclick=addComparison;
   }
@@ -315,7 +314,8 @@
     if(!link?.isConnected)return;
     const status=copied?'inquiryCopied':'copyInquiryManually',fallback=copied?'':message;
     if(link?.id==='inquiryLink'){
-      state.detailMessage=status;state.detailInquiryFallback=fallback;renderMessages();
+      if(!copied)window.prompt(t('copyInquiryManually'),message);
+      state.detailMessage=status;state.detailInquiryFallback='';renderMessages();
     }else if(link?.classList.contains('comparison-messenger')){
       state.trayMessage=status;state.trayInquiryFallback=fallback;renderMessages();
     }else if(link){
