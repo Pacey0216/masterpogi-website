@@ -10,14 +10,14 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=7">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png?v=7">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=7">
-  <link rel="stylesheet" href="catalog.css?v=7">
+  <link rel="stylesheet" href="catalog.css?v=9">
   <link rel="stylesheet" href="image-viewer.css?v=6">
   <link rel="stylesheet" href="contact-widget.css?v=6">
   <script defer src="config.js?v=7"></script>
-  <script defer src="catalog-model.js?v=7"></script>
+  <script defer src="catalog-model.js?v=8"></script>
   <script defer src="photo-frame.js?v=6"></script>
   <script defer src="image-viewer.js?v=6"></script>
-  <script defer src="catalog.js?v=7"></script>
+  <script defer src="catalog.js?v=9"></script>
   <script defer src="contact-widget.js?v=7"></script>
 </head>
 <body>
@@ -68,11 +68,8 @@
       <div><h2 id="requestTitle" data-i18n="requestTitle">Hindi mo makita ang hinahanap mong relo?</h2>
       <p data-i18n="requestMessage">I-message sa amin ang larawan o model na gusto mo. Kung wala pa kaming stock, maaari naming itanong sa manufacturer kung puwedeng i-order.</p></div>
       <div class="request-fields">
-        <label for="watchRequest" data-i18n="requestLabel">Anong relo ang hinahanap mo?</label>
-        <input id="watchRequest" type="text" maxlength="200" required aria-describedby="requestHint requestStatus">
-        <p id="requestHint" class="hint" data-i18n="inquiryHint">Kokopyahin ang mensahe. I-paste ito sa Messenger.</p>
+        <p id="requestHint" class="hint" data-i18n="requestHint">Puwedeng magpadala ng larawan ng relo sa Messenger. Hindi kailangang alam mo ang pangalan.</p>
         <a id="requestLink" class="primary" data-i18n="requestButton" target="_blank" rel="noopener noreferrer">Mag-request ng Relo</a>
-        <p id="requestStatus" class="inquiry-copy-status" role="status"></p>
       </div>
     </section>
     <section id="compareTray" class="compare-tray" aria-labelledby="compareTitle">

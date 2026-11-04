@@ -21,7 +21,7 @@
       allBrands:'Lahat ng brand',allGrades:'Lahat ng grade',available:'Available',loading:'Kinukuha ang mga relo…',
       loadFailed:'Hindi makuha ang mga relo. Subukan muli.',stale:'Hindi ma-refresh. Huling matagumpay na bilang ang ipinapakita.',
       updated:time=>'Na-update '+time+' · Awtomatikong nagre-refresh',
-      count:(n,total)=>n+' relo'+(n!==total?' sa '+total:''),stock:n=>'May '+n+' piraso',totalStock:n=>'Kabuuang available: '+n,
+      count:(n,total)=>n+' relo'+(n!==total?' sa '+total:''),stock:n=>'May '+n+' piraso',cardStock:n=>'Mayroon '+n,
       view:name=>'Tingnan ang detalye ng '+name,zoom:name=>'Palakihin ang larawan ng '+name,
       photoDescription:(name,grade,size,index)=>name+' · '+grade+' · '+size+' · larawan '+(index+1),
       photoGroup:'Mga larawan ng napiling relo',noPhoto:'Wala pang larawan',notListed:'Hindi nakatala',
@@ -34,7 +34,8 @@
       variantChanged:'Hindi na available ang dating pinili. Piliin muli ang available na grade at sukat.',
       chooseVariant:'Piliin ang grade at sukat para makita ang eksaktong stock at SKU.',chooseGrade:'Pumili ng grade',chooseSize:'Pumili ng sukat',chooseSku:'Pumili ng SKU',
       inquiryCopied:'Nakopya ang mensahe. I-paste ito sa Messenger.',copyInquiryManually:'Kopyahin ang mensaheng ito at i-paste sa Messenger:',
-      inquiryHint:'Kokopyahin ang mensahe. I-paste ito sa Messenger.',requestLabel:'Anong relo ang hinahanap mo?',requestRequired:'Ilagay muna ang relong hinahanap mo.',
+      inquiryHint:'Kokopyahin ang mensahe sa ibaba. I-paste ito sa Messenger.',
+      requestHint:'Puwedeng magpadala ng larawan ng relo sa Messenger. Hindi kailangang alam mo ang pangalan.',
       productDisclosure:'Replica ang lahat ng relong ibinebenta rito; hindi authentic na produkto ng mga tatak na binanggit. Ang Japan, Swiss, at Super C (1:1) ay mga kategorya ng grade ng nagbebenta, hindi sertipikasyon ng tatak o patunay ng bansang pinagmulan.',
       footerDisclaimer:'Ang mga pangalan, trademark, at logo ng ibang tatak ay pag-aari ng kani-kanilang may-ari. Independent na nagbebenta ang Master Pogi at walang kaugnayan, sponsorship, o endorsement mula sa mga tatak na ito. Ginagamit ang mga pangalan upang makatulong sa pagkilala at pagkumpara ng mga listing.',
       requestTitle:'Hindi mo makita ang hinahanap mong relo?',
@@ -53,7 +54,7 @@
       allBrands:'All brands',allGrades:'All grades',available:'Available',loading:'Loading watches…',
       loadFailed:'Watches could not be loaded. Please try again.',stale:'Could not refresh. Showing the last successful stock update.',
       updated:time=>'Updated '+time+' · Refreshes automatically',
-      count:(n,total)=>n+' watch'+(n===1?'':'es')+(n!==total?' of '+total:''),stock:n=>n+' available',totalStock:n=>'Total available: '+n,
+      count:(n,total)=>n+' watch'+(n===1?'':'es')+(n!==total?' of '+total:''),stock:n=>n+' available',cardStock:n=>'Available '+n,
       view:name=>'View details for '+name,zoom:name=>'Enlarge photo of '+name,
       photoDescription:(name,grade,size,index)=>name+' · '+grade+' · '+size+' · photo '+(index+1),
       photoGroup:'Selected watch photos',noPhoto:'No photo available yet',notListed:'Not listed',
@@ -66,7 +67,8 @@
       variantChanged:'Your previous choice is no longer available. Choose an available grade and size again.',
       chooseVariant:'Choose a grade and size to see its exact stock and SKU.',chooseGrade:'Choose a grade',chooseSize:'Choose a size',chooseSku:'Choose a SKU',
       inquiryCopied:'Message copied. Paste it in Messenger.',copyInquiryManually:'Copy this message and paste it in Messenger:',
-      inquiryHint:'Copies your message. Paste it in Messenger.',requestLabel:'Which watch are you looking for?',requestRequired:'Enter the watch you are looking for first.',
+      inquiryHint:'Copies the message below. Paste it in Messenger.',
+      requestHint:'Send a watch photo in Messenger. You do not need to know its name.',
       productDisclosure:'All watches sold here are replicas, not authentic products of the named brands. Japan, Swiss, and Super C (1:1) are seller grade categories, not brand certifications or proof of country of origin.',
       footerDisclaimer:'Third-party names, trademarks, and logos belong to their respective owners. Master Pogi is an independent seller and is not affiliated with, sponsored by, or endorsed by those brands. Product references are provided to help buyers identify and compare listings.',
       requestTitle:'Can’t find the watch you’re looking for?',
@@ -89,6 +91,10 @@
   function imageURL(slot){const url=typeof slot==='string'?slot:slot?.url||'';return state.failedPhotos.has(url)?'':url;}
   function availablePositions(p,v){return photos(p,v).flatMap((slot,index)=>imageURL(slot)?[index]:[]);}
   function initialPhoto(p,v){return availablePositions(p,v)[0]??0;}
+  function selectionPhoto(selection){
+    const positions=availablePositions(selection.product,selection.variant);
+    return positions.find(position=>imageURL(photos(selection.product,selection.variant)[position])===selection.photoUrl)??positions[0]??0;
+  }
   function missing(){return '<div class="photo-missing"><span aria-hidden="true">▧</span><span>'+esc(t('noPhoto'))+'</span></div>';}
   function photo(p,v,position=0,eager=false){
     const url=imageURL(photos(p,v)[position]), source=window.PhotoFrame?.sources(url)[0]||url;
@@ -124,14 +130,15 @@
         if($('productDialog').open&&state.active)renderGallery();
         if(state.comparisonOpen)renderComparison();
       });
-      window.PhotoFrame?.enhance(img);
+      // Keep the full original photo in product details and saved selections.
+      if(!img.closest('#gallery,.tray-photo,.listing-image'))window.PhotoFrame?.enhance(img);
     });
   }
   function representative(p){return variants(p).find(v=>!filters().grade||v.grade===filters().grade)||variants(p)[0];}
   function card(p,bestSeller=false,eager=false){
     const v=bestSeller?variants(p)[0]:representative(p),article=document.createElement('article');
     article.className='product-card';article.dataset.sku=p.sku;
-    article.innerHTML='<button type="button" class="listing-image" aria-label="'+esc(t('view',p.name))+'">'+photo(p,v,initialPhoto(p,v),eager)+'</button><button type="button" class="card-open" aria-label="'+esc(t('view',p.name))+'"><span class="product-name">'+esc(p.name)+'</span></button><p class="stock-status card-stock" data-total-stock="'+p.stock+'">'+esc(t('totalStock',p.stock))+'</p><button type="button" class="card-inquiry">'+esc(t('inquiryButton'))+'</button>';
+    article.innerHTML='<button type="button" class="listing-image" aria-label="'+esc(t('view',p.name))+'">'+photo(p,v,initialPhoto(p,v),eager)+'</button><div class="card-info"><button type="button" class="card-open" aria-label="'+esc(t('view',p.name))+'"><span class="product-name">'+esc(p.name)+'</span></button><p class="stock-status card-stock" data-total-stock="'+p.stock+'">'+esc(t('cardStock',p.stock))+'</p><button type="button" class="card-inquiry">Message Us</button></div>';
     article.querySelectorAll('.listing-image,.card-open,.card-inquiry').forEach(button=>button.onclick=event=>{event.stopPropagation();openProduct(p);});
     enhanceImages(article);return article;
   }
@@ -186,12 +193,6 @@
     document.querySelectorAll('[data-language]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.language===state.language)));
     $('productDialog').querySelector('.close-dialog').setAttribute('aria-label',t('closeDetails'));
     $('requestLink').href=messengerURL();
-    $('requestLink').onclick=event=>{
-      const message=M.requestText($('watchRequest').value);
-      if(!message){event.preventDefault();$('watchRequest').setAttribute('aria-invalid','true');$('requestStatus').textContent=t('requestRequired');$('watchRequest').focus();return;}
-      $('watchRequest').removeAttribute('aria-invalid');copyMessengerMessage(message,$('requestLink'));
-    };
-    if($('watchRequest').getAttribute('aria-invalid')==='true')$('requestStatus').textContent=t('requestRequired');
     window.ImageViewer?.setLanguage(state.language);
     updateFilterOptions();renderInventoryStatus();renderTop();renderProducts();renderTray();
     if($('productDialog').open){if(state.active)renderProductDetail();else renderUnavailable();}
@@ -273,6 +274,10 @@
     const skuChoice=matches.length>1?'<label><span>SKU</span><select id="detailSku">'+placeholder('chooseSku')+options(matches.map(x=>x.sku),v?.sku)+'</select></label>':'';
     $('productBody').innerHTML='<div class="product-detail"><div id="gallery" class="gallery"></div><div class="detail-info"><h2 id="productTitle">'+esc(p.name)+'</h2><p id="stockStatus" class="stock-status">'+esc(v?t('stock',v.stock):t('chooseVariant'))+'</p><div class="variant-fields"><label><span>'+esc(t('grade'))+'</span><select id="detailGrade">'+placeholder('chooseGrade')+options(grades,state.detailGrade,gradeLabel)+'</select></label><label><span>'+esc(t('size'))+'</span><select id="detailSize"'+(state.detailGrade===null?' disabled':'')+'>'+placeholder('chooseSize')+options(sizes,state.detailSize,sizeLabel)+'</select></label>'+skuChoice+'</div><div class="detail-actions"><button id="addComparison" type="button"'+(v?'':' disabled')+'>'+esc(t(state.editKey?'saveCompare':'compare'))+'</button>'+(v?'<a id="inquiryLink" class="primary" href="'+esc(productMessenger(p,v))+'" target="_blank" rel="noopener noreferrer">'+esc(t('inquiryButton'))+'</a>':'<button type="button" class="primary" id="chooseInquiryVariant">'+esc(t('inquiryButton'))+'</button>')+'</div><p id="detailMessage" class="detail-message" role="status"></p>'+dl([...specRows(p,v),...extraRows(p)])+'</div></div>';
     const disclaimer=document.createElement('p');disclaimer.className='popup-disclaimer';disclaimer.textContent=t('popupDisclaimer');$('productBody').append(disclaimer);
+    if(p.description){
+      const description=document.createElement('p');description.className='product-description';description.textContent=p.description;
+      $('productBody').querySelector('.specs').before(description);
+    }
     renderGallery();renderMessages();
     const updateChoice=(grade,size,exactSku=null)=>{
       window.ImageViewer?.close();state.detailGrade=grade;state.detailSize=size;
@@ -289,6 +294,7 @@
     if($('inquiryLink')){
       $('inquiryLink').onclick=()=>copyMessengerMessage(M.inquiryText(p,v),$('inquiryLink'));
       const hint=document.createElement('p');hint.className='hint';hint.textContent=t('inquiryHint');$('inquiryLink').after(hint);
+      const preview=document.createElement('p');preview.className='inquiry-preview';preview.textContent=M.inquiryText(p,v);hint.after(preview);
     }
     $('addComparison').onclick=addComparison;
   }
@@ -320,7 +326,7 @@
   }
   function addComparison(){
     if(!state.active||!state.variant)return;
-    const candidate={product:state.active,variant:state.variant};
+    const candidate={product:state.active,variant:state.variant,photoUrl:imageURL(photos(state.active,state.variant)[state.photo])};
     const editIndex=state.selections.findIndex(s=>key(s.product,s.variant)===state.editKey);
     const others=state.selections.filter((s,i)=>i!==editIndex);
     let error='';
@@ -336,10 +342,11 @@
     $('compareSelections').hidden=state.comparisonOpen;
     $('compareSelections').replaceChildren(...state.selections.map(s=>{
       const item=document.createElement('div');item.className='tray-item';item.dataset.sku=s.variant.sku;
-      item.innerHTML='<button class="tray-edit" type="button" aria-label="'+esc(t('editSelection',s.product.name))+'"><span class="tray-copy"><strong>'+esc(s.product.name)+'</strong><span>'+esc(gradeLabel(s.variant.grade))+' · '+esc(sizeLabel(s.variant.size))+'</span><span>'+esc(t('stock',s.variant.stock))+'</span></span></button><button class="tray-remove" type="button" aria-label="'+esc(t('removeSelection',s.product.name))+'">×</button>';
-      item.querySelector('.tray-edit').onclick=()=>openProduct(s.product,s.variant,key(s.product,s.variant));
+      item.innerHTML='<button class="tray-edit" type="button" aria-label="'+esc(t('editSelection',s.product.name))+'"><span class="tray-photo">'+photo(s.product,s.variant,selectionPhoto(s),true)+'</span><span class="tray-copy"><strong>'+esc(s.product.name)+'</strong><span>'+esc(gradeLabel(s.variant.grade))+' · '+esc(sizeLabel(s.variant.size))+'</span><span>'+esc(t('stock',s.variant.stock))+'</span></span></button><button class="tray-remove" type="button" aria-label="'+esc(t('removeSelection',s.product.name))+'">×</button>';
+      item.querySelector('.tray-edit').onclick=()=>{openProduct(s.product,s.variant,key(s.product,s.variant));state.photo=selectionPhoto(s);renderGallery();};
       item.querySelector('.tray-remove').onclick=()=>{state.selections=state.selections.filter(x=>x!==s);state.trayMessage='removed';state.comparisonOpen=false;renderTray();};return item;
     }));
+    enhanceImages($('compareSelections'));
     $('compareButton').disabled=state.selections.length!==2||!eligible(...state.selections);
     $('compareButton').hidden=state.comparisonOpen;$('compareButton').setAttribute('aria-expanded',String(state.comparisonOpen));
     $('collapseComparison').hidden=!state.comparisonOpen;$('comparisonPanel').hidden=!state.comparisonOpen;
@@ -358,7 +365,7 @@
     const before=state.selections.length;
     state.selections=state.selections.map(s=>{
       const p=state.products.find(p=>p.sku===s.product.sku);if(!p)return null;
-      const v=variants(p).find(v=>key(p,v)===key(s.product,s.variant));return v?{product:p,variant:v}:null;
+      const v=variants(p).find(v=>key(p,v)===key(s.product,s.variant));return v?{product:p,variant:v,photoUrl:s.photoUrl}:null;
     }).filter(Boolean);
     if(before!==state.selections.length)state.trayMessage='removedUnavailable';
     if(state.selections.length!==2||!eligible(...state.selections))state.comparisonOpen=false;
@@ -390,7 +397,7 @@
       const choices=comparisonChoices(index,p).filter(x=>x.grade===value);v=choices.find(x=>x.size===old.variant.size)||choices[0];
     }else v=variants(p).find(x=>x.grade===old.variant.grade&&x.size===value);
     if(!v||!eligible({product:p,variant:v},state.selections[1-index])){state.trayMessage='duplicate';renderComparison();renderMessages();return;}
-    state.selections[index]={product:p,variant:v};state.trayMessage='';renderTray();renderComparison();
+    state.selections[index]={product:p,variant:v,photoUrl:imageURL(photos(p,v)[initialPhoto(p,v)])};state.trayMessage='';renderTray();renderComparison();
     const id='compare'+field[0].toUpperCase()+field.slice(1)+index;$(id)?.focus({preventScroll:true});
   }
   function renderComparison(){
@@ -405,13 +412,17 @@
     });
     // Pair the first available image with the first, then the second with the
     // second. Original source-slot positions remain on each actual image.
-    const sequences=state.selections.map(s=>availablePositions(s.product,s.variant));
-    const rows=Math.max(...sequences.map(list=>list.length));
+    const sequences=state.selections.map(s=>{
+      const positions=availablePositions(s.product,s.variant),selected=selectionPhoto(s);
+      return positions.includes(selected)?[selected,...positions.filter(position=>position!==selected)]:positions;
+    });
+    const rows=Math.max(1,...sequences.map(list=>list.length));
     for(let row=0;row<rows;row++){
       state.selections.forEach((s,index)=>{
         const cell=document.createElement('div'),position=sequences[index][row];
         cell.className='comparison-photo'+(position===undefined?' empty':'');cell.dataset.column=index;cell.dataset.row=row;
-        if(position===undefined)cell.setAttribute('aria-hidden','true');
+        if(position===undefined&&row===0)cell.innerHTML=photo(s.product,s.variant,selectionPhoto(s),true);
+        else if(position===undefined)cell.setAttribute('aria-hidden','true');
         else cell.innerHTML=photo(s.product,s.variant,position,row===0);
         grid.append(cell);
       });
@@ -420,6 +431,7 @@
       const details=document.createElement('div');details.className='comparison-details';details.dataset.column=index;details.dataset.sku=s.variant.sku;
       details.innerHTML='<h3>'+esc(s.product.name)+'</h3>'+dl([...specRows(s.product,s.variant),...extraRows(s.product)])+'<a class="primary comparison-messenger" href="'+esc(productMessenger(s.product,s.variant))+'" target="_blank" rel="noopener noreferrer">'+esc(t('inquiryButton'))+'</a>';
       details.querySelector('.comparison-messenger').onclick=()=>copyMessengerMessage(M.inquiryText(s.product,s.variant),details.querySelector('.comparison-messenger'));
+      const preview=document.createElement('p');preview.className='inquiry-preview';preview.textContent=M.inquiryText(s.product,s.variant);details.append(preview);
       grid.append(details);
     });
     enhanceImages(grid);
@@ -432,8 +444,6 @@
   $('topSellers').addEventListener('scroll',updateCarousel,{passive:true});window.addEventListener('resize',updateCarousel);
   $('topSellers').addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();moveCarousel(e.key==='ArrowRight'?1:-1);}});
   $('retry').onclick=loadProducts;$('contactLink').href=messengerURL();$('headerMessenger').href=messengerURL();
-  $('watchRequest').oninput=()=>{$('watchRequest').removeAttribute('aria-invalid');$('requestStatus').textContent='';};
-  $('watchRequest').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();$('requestLink').click();}};
   document.querySelectorAll('[data-language]').forEach(button=>button.onclick=()=>setLanguage(button.dataset.language));
   $('compareButton').onclick=expandComparison;$('collapseComparison').onclick=collapseComparison;
   const productDialog=$('productDialog');

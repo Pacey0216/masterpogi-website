@@ -86,7 +86,7 @@
       if (!name || !sku) continue;
       const brand = text(product.brand || product.category) || 'Watch';
       products.push({
-        sku, name, brand,
+        sku, name, brand, description: text(product.description),
         stock: variants.reduce((sum, v) => sum + v.stock, 0),
         sold: number(product.sold), brandSold: totals.get(folded(brand)) || 0, featured: isFeatured(product.featured),
         variants, specs: publicSpecs(product.specs), visible: true
@@ -145,12 +145,8 @@
     return {allowed: true, reason: ''};
   }
   function inquiryText(product, variant) {
-    const name = text(product?.name), grade = text(variant?.grade);
-    return name && grade ? 'How much po ' + grade + ' ' + name + '?' : '';
+    const name = text(product?.name), grade = text(variant?.grade), sku = text(variant?.sku || variant?.variantSku);
+    return name && grade && sku ? 'How much po ' + grade + ' ' + name + '? SKU: ' + sku : '';
   }
-  function requestText(value) {
-    const request = text(value).replace(/[?？\s]+$/u, '').trim();
-    return request ? 'Meron po kayong ' + request + '?' : '';
-  }
-  return Object.freeze({normalizeInventory, availableVariants, sortCatalog, filterProducts, bestSellers, featuredProducts, paginateProducts, selectionKey, photosForVariant, comparisonEligibility, inquiryText, requestText});
+  return Object.freeze({normalizeInventory, availableVariants, sortCatalog, filterProducts, bestSellers, featuredProducts, paginateProducts, selectionKey, photosForVariant, comparisonEligibility, inquiryText});
 });
