@@ -28,12 +28,12 @@
   }
   byId('contactPhone').href = config.phoneUrl || 'tel:+639762555370';
   byId('contactPhoneText').textContent = config.phoneDisplay || '0976 255 5370';
-  byId('contactEmail').href = `mailto:${config.email || 'masterpogiwatch@gmail.com'}`;
-  byId('contactEmailText').textContent = config.email || 'masterpogiwatch@gmail.com';
+  byId('contactEmail').href = `mailto:${config.email || 'support@masterpogiwatch.trade'}`;
+  byId('contactEmailText').textContent = config.email || 'support@masterpogiwatch.trade';
   try {
-    const url = new URL(config.facebookUrl);
-    if (url.protocol === 'https:' && ['facebook.com','www.facebook.com','m.facebook.com','fb.com','www.fb.com'].includes(url.hostname)) {
-      byId('contactFacebook').href = url.href;
+    const url = new URL(config.messengerUrl);
+    if (url.protocol === 'https:' && url.hostname === 'www.facebook.com' && /^\/messages\/t\/\d+\/?$/.test(url.pathname)) {
+      byId('contactFacebook').href = url.origin + url.pathname;
     }
   } catch {}
   toggle.addEventListener('click', () => setOpen(panel.hidden));
@@ -47,10 +47,10 @@
       setOpen(false, true);
     }
   });
-  widget.addEventListener('focusout', () => {
-    queueMicrotask(() => {
-      if (!panel.hidden && !widget.contains(document.activeElement)) setOpen(false);
-    });
+  document.addEventListener('focusin', event => {
+    // Check the settled focus destination. Safari may leave focus on BODY
+    // during a pointer click; dismissing on focusout would cancel the link.
+    if (!panel.hidden && !widget.contains(event.target)) setOpen(false);
   });
   // Product and image dialogs use the top layer; close this panel when they open.
   new MutationObserver(() => {

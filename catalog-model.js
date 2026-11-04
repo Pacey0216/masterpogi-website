@@ -144,9 +144,13 @@
     if (sku(a) === sku(b)) return {allowed: false, reason: 'duplicate'};
     return {allowed: true, reason: ''};
   }
-  function inquiryText(variant) {
-    const sku = text(variant?.sku || variant?.variantSku);
-    return sku ? 'how much for this product SKU ' + sku + '?' : '';
+  function inquiryText(product, variant) {
+    const name = text(product?.name), grade = text(variant?.grade);
+    return name && grade ? 'How much po ' + grade + ' ' + name + '?' : '';
   }
-  return Object.freeze({normalizeInventory, availableVariants, sortCatalog, filterProducts, bestSellers, featuredProducts, paginateProducts, selectionKey, photosForVariant, comparisonEligibility, inquiryText});
+  function requestText(value) {
+    const request = text(value).replace(/[?？\s]+$/u, '').trim();
+    return request ? 'Meron po kayong ' + request + '?' : '';
+  }
+  return Object.freeze({normalizeInventory, availableVariants, sortCatalog, filterProducts, bestSellers, featuredProducts, paginateProducts, selectionKey, photosForVariant, comparisonEligibility, inquiryText, requestText});
 });

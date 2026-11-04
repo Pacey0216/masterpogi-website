@@ -13,6 +13,7 @@ a{color:var(--accent)}
 main,footer{width:min(100%,1120px);margin:auto;padding:20px}
 h1,h2,h3,p{margin:0}
 h1,h2{font-size:23px;line-height:1.25;letter-spacing:-.4px}
+#topTitle,#availableTitle{font-size:32px;line-height:1.2;letter-spacing:-.5px}
 h3{font-size:17px;overflow-wrap:anywhere}
 p{overflow-wrap:anywhere}
 .section-heading,.tray-heading,.dialog-bar{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -66,6 +67,11 @@ p{overflow-wrap:anywhere}
 .special-request h2{font-size:19px}
 .special-request p{font-size:14px;margin-top:7px;max-width:700px}
 .special-request .primary{flex-shrink:0}
+.request-fields{flex:0 1 340px;min-width:240px}
+.request-fields label{display:block;font-size:14px;margin-bottom:6px}
+.request-fields input{width:100%;border:1px solid #d2cbcb;border-radius:5px;padding:10px;font-size:16px;background:#fff}
+.request-fields .primary{display:block;margin-top:8px}
+.request-fields .hint,.request-fields .inquiry-copy-status{font-size:12px}
 .compare-tray{margin-top:24px;padding:18px;border:1px solid #d9c5c5;background:#fff;border-radius:8px;scroll-margin-top:12px}
 .compare-tray h2{font-size:21px}
 .tray-heading{flex-wrap:wrap}
@@ -123,8 +129,9 @@ footer{border-top:1px solid var(--line);font-size:12px;color:var(--muted);margin
   main,footer{padding-left:10px;padding-right:10px}
   main{padding-top:14px}
   h1,h2{font-size:20px}
-  .header-inner{padding:8px 10px;gap:8px}
-  .header-actions{gap:7px}
+  #topTitle,#availableTitle{font-size:26px}
+  .header-inner{padding:8px 10px;gap:8px;flex-wrap:wrap}
+  .header-actions{gap:7px;margin-left:auto}
   .logo-link{gap:7px}
   .logo-wordmark{font-size:15px}
   .language-switch button{font-size:12px;padding:7px 8px;min-height:34px}
@@ -149,6 +156,7 @@ footer{border-top:1px solid var(--line);font-size:12px;color:var(--muted);margin
   .special-request{flex-direction:column;align-items:stretch;gap:12px;padding:15px;margin:22px 0}
   .special-request h2{font-size:18px}
   .special-request p{font-size:13px}
+  .request-fields{flex-basis:auto;min-width:0;width:100%}
   .compare-tray{padding:10px}
   .compare-tray h2{font-size:19px}
   .tray-heading{gap:7px}
@@ -180,5 +188,5 @@ footer{border-top:1px solid var(--line);font-size:12px;color:var(--muted);margin
   .rights-disclaimer{font-size:11px}
   footer{font-size:11px}
 }
-@media(max-width:430px){.logo-wordmark{display:none}}
+@media(max-width:600px){html{scroll-padding-top:125px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}

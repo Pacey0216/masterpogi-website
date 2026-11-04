@@ -11,7 +11,7 @@
     detailMessage:'',detailInquiryFallback:'',trayMessage:'',trayInquiryFallback:'',failedPhotos:new Set()};
   const COPY={
     fil:{
-      title:'Mga Relo · Master Pogi',meta:'Mga available na relo ng Master Pogi. Pumili, ikumpara, at magtanong sa Messenger.',
+      title:'Master Pogi Watches',meta:'Mga available na relo ng Master Pogi. Pumili, ikumpara, at magtanong sa Messenger.',
       bestTitle:'Pinakamabentang Relo',topEmpty:'Wala pang naitalang benta para sa mga available na relo.',
       popupDisclaimer:'Replica ang mga relong ito at walang kaugnayan sa mga orihinal na brand.',
       availableTitle:'Mga Available na Relo',catalogNote:'Para sa presyo at ibang detalye, mag-message sa amin.',
@@ -34,16 +34,16 @@
       variantChanged:'Hindi na available ang dating pinili. Piliin muli ang available na grade at sukat.',
       chooseVariant:'Piliin ang grade at sukat para makita ang eksaktong stock at SKU.',chooseGrade:'Pumili ng grade',chooseSize:'Pumili ng sukat',chooseSku:'Pumili ng SKU',
       inquiryCopied:'Nakopya ang mensahe. I-paste ito sa Messenger.',copyInquiryManually:'Kopyahin ang mensaheng ito at i-paste sa Messenger:',
+      inquiryHint:'Kokopyahin ang mensahe. I-paste ito sa Messenger.',requestLabel:'Anong relo ang hinahanap mo?',requestRequired:'Ilagay muna ang relong hinahanap mo.',
       productDisclosure:'Replica ang lahat ng relong ibinebenta rito; hindi authentic na produkto ng mga tatak na binanggit. Ang Japan, Swiss, at Super C (1:1) ay mga kategorya ng grade ng nagbebenta, hindi sertipikasyon ng tatak o patunay ng bansang pinagmulan.',
       footerDisclaimer:'Ang mga pangalan, trademark, at logo ng ibang tatak ay pag-aari ng kani-kanilang may-ari. Independent na nagbebenta ang Master Pogi at walang kaugnayan, sponsorship, o endorsement mula sa mga tatak na ito. Ginagamit ang mga pangalan upang makatulong sa pagkilala at pagkumpara ng mga listing.',
       requestTitle:'Hindi mo makita ang hinahanap mong relo?',
       requestMessage:'I-message sa amin ang larawan o model na gusto mo. Kung wala pa kaming stock, maaari naming itanong sa manufacturer kung puwedeng i-order.',
       requestButton:'Mag-request ng Relo',
-      requestInquiry:'Hi! May hinahanap akong relo na wala sa catalog. Puwede po bang mag-request? Ipapadala ko ang larawan o model.',
       specs:{Reference:'Reference',Movement:'Mekanismo','Case Material':'Materyal ng kaha',Dial:'Dial',Strap:'Strap','Water Resistance':'Resistensya sa tubig',Case:'Kaha',Material:'Materyal',Color:'Kulay',Gender:'Para kanino'}
     },
     en:{
-      title:'Watches · Master Pogi',meta:'Available watches from Master Pogi. Choose, compare, and ask on Messenger.',
+      title:'Master Pogi Watches',meta:'Available watches from Master Pogi. Choose, compare, and ask on Messenger.',
       bestTitle:'Best Selling Watches',topEmpty:'No recorded sales yet for available watches.',
       popupDisclaimer:'These watches are replicas and are not affiliated with the original brands.',
       availableTitle:'Available Watches',catalogNote:'Message us for prices and more details.',
@@ -66,12 +66,12 @@
       variantChanged:'Your previous choice is no longer available. Choose an available grade and size again.',
       chooseVariant:'Choose a grade and size to see its exact stock and SKU.',chooseGrade:'Choose a grade',chooseSize:'Choose a size',chooseSku:'Choose a SKU',
       inquiryCopied:'Message copied. Paste it in Messenger.',copyInquiryManually:'Copy this message and paste it in Messenger:',
+      inquiryHint:'Copies your message. Paste it in Messenger.',requestLabel:'Which watch are you looking for?',requestRequired:'Enter the watch you are looking for first.',
       productDisclosure:'All watches sold here are replicas, not authentic products of the named brands. Japan, Swiss, and Super C (1:1) are seller grade categories, not brand certifications or proof of country of origin.',
       footerDisclaimer:'Third-party names, trademarks, and logos belong to their respective owners. Master Pogi is an independent seller and is not affiliated with, sponsored by, or endorsed by those brands. Product references are provided to help buyers identify and compare listings.',
       requestTitle:'Can’t find the watch you’re looking for?',
       requestMessage:'Send us a photo or model you want. If we don’t have it in stock, we can check with the manufacturer if it can be ordered.',
       requestButton:'Request a Watch',
-      requestInquiry:'Hi! I’m looking for a watch that isn’t in the catalog. Can I request it? I’ll send the photo or model.',
       specs:{Reference:'Reference',Movement:'Movement','Case Material':'Case material',Dial:'Dial',Strap:'Strap','Water Resistance':'Water resistance',Case:'Case',Material:'Material',Color:'Color',Gender:'For'}
     }
   };
@@ -186,7 +186,12 @@
     document.querySelectorAll('[data-language]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.language===state.language)));
     $('productDialog').querySelector('.close-dialog').setAttribute('aria-label',t('closeDetails'));
     $('requestLink').href=messengerURL();
-    $('requestLink').onclick=()=>copyMessengerMessage(t('requestInquiry'),$('requestLink'));
+    $('requestLink').onclick=event=>{
+      const message=M.requestText($('watchRequest').value);
+      if(!message){event.preventDefault();$('watchRequest').setAttribute('aria-invalid','true');$('requestStatus').textContent=t('requestRequired');$('watchRequest').focus();return;}
+      $('watchRequest').removeAttribute('aria-invalid');copyMessengerMessage(message,$('requestLink'));
+    };
+    if($('watchRequest').getAttribute('aria-invalid')==='true')$('requestStatus').textContent=t('requestRequired');
     window.ImageViewer?.setLanguage(state.language);
     updateFilterOptions();renderInventoryStatus();renderTop();renderProducts();renderTray();
     if($('productDialog').open){if(state.active)renderProductDetail();else renderUnavailable();}
@@ -281,13 +286,22 @@
     $('detailSize').onchange=e=>{updateChoice(state.detailGrade,e.target.value||null);$('detailSize').focus({preventScroll:true});};
     if($('detailSku'))$('detailSku').onchange=e=>{updateChoice(state.detailGrade,state.detailSize,e.target.value);$('detailSku')?.focus({preventScroll:true});};
     if($('chooseInquiryVariant'))$('chooseInquiryVariant').onclick=()=>{state.detailMessage='chooseVariant';renderMessages();$(state.detailGrade===null?'detailGrade':state.detailSize===null?'detailSize':'detailSku')?.focus();};
-    if($('inquiryLink'))$('inquiryLink').onclick=()=>copyMessengerMessage(M.inquiryText(v),$('inquiryLink'));
+    if($('inquiryLink')){
+      $('inquiryLink').onclick=()=>copyMessengerMessage(M.inquiryText(p,v),$('inquiryLink'));
+      const hint=document.createElement('p');hint.className='hint';hint.textContent=t('inquiryHint');$('inquiryLink').after(hint);
+    }
     $('addComparison').onclick=addComparison;
   }
   function messengerURL(){
-    try{const url=new URL(C.messengerUrl);if(url.protocol!=='https:'||!['m.me','www.messenger.com','messenger.com'].includes(url.hostname))return '#';url.searchParams.delete('text');return url.href;}catch{return '#';}
+    try{
+      const url=new URL(C.messengerUrl);
+      if(url.protocol!=='https:'||url.hostname!=='www.facebook.com'||!/^\/messages\/t\/\d+\/?$/.test(url.pathname))return '#';
+      // This direct Facebook conversation URL has no verified draft-text parameter.
+      // Keep it plain; copy the exact inquiry on the buyer's click for pasting.
+      return url.origin+url.pathname;
+    }catch{return '#';}
   }
-  function productMessenger(p,v){return variants(p).some(choice=>key(p,choice)===key(p,v))&&M.inquiryText(v)?messengerURL():'#';}
+  function productMessenger(p,v){return variants(p).some(choice=>key(p,choice)===key(p,v))&&M.inquiryText(p,v)?messengerURL():'#';}
   async function copyMessengerMessage(message,link){
     if(!message)return;
     let copied=false;
@@ -405,7 +419,7 @@
     state.selections.forEach((s,index)=>{
       const details=document.createElement('div');details.className='comparison-details';details.dataset.column=index;details.dataset.sku=s.variant.sku;
       details.innerHTML='<h3>'+esc(s.product.name)+'</h3>'+dl([...specRows(s.product,s.variant),...extraRows(s.product)])+'<a class="primary comparison-messenger" href="'+esc(productMessenger(s.product,s.variant))+'" target="_blank" rel="noopener noreferrer">'+esc(t('inquiryButton'))+'</a>';
-      details.querySelector('.comparison-messenger').onclick=()=>copyMessengerMessage(M.inquiryText(s.variant),details.querySelector('.comparison-messenger'));
+      details.querySelector('.comparison-messenger').onclick=()=>copyMessengerMessage(M.inquiryText(s.product,s.variant),details.querySelector('.comparison-messenger'));
       grid.append(details);
     });
     enhanceImages(grid);
@@ -418,6 +432,8 @@
   $('topSellers').addEventListener('scroll',updateCarousel,{passive:true});window.addEventListener('resize',updateCarousel);
   $('topSellers').addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();moveCarousel(e.key==='ArrowRight'?1:-1);}});
   $('retry').onclick=loadProducts;$('contactLink').href=messengerURL();$('headerMessenger').href=messengerURL();
+  $('watchRequest').oninput=()=>{$('watchRequest').removeAttribute('aria-invalid');$('requestStatus').textContent='';};
+  $('watchRequest').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();$('requestLink').click();}};
   document.querySelectorAll('[data-language]').forEach(button=>button.onclick=()=>setLanguage(button.dataset.language));
   $('compareButton').onclick=expandComparison;$('collapseComparison').onclick=collapseComparison;
   const productDialog=$('productDialog');
