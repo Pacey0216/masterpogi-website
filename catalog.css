@@ -119,6 +119,7 @@ footer{border-top:1px solid var(--line);font-size:12px;color:var(--muted);margin
 .gallery>.photo-open>.photo-frame{aspect-ratio:auto;width:auto}
 .gallery>.photo-open>.photo-frame img{width:auto;height:auto;max-width:100%;max-height:64vh;object-fit:contain;padding:0;mix-blend-mode:normal}
 .gallery>.photo-frame{aspect-ratio:3/4;max-height:64vh}
+.gallery>.photo-unselected{color:var(--muted);text-align:center;padding:18px}
 .product-description{font-size:14px;line-height:1.5;white-space:pre-line;margin:12px 0;padding:10px 12px;border:1px solid var(--line);border-radius:5px;overflow-wrap:anywhere}
 .inquiry-preview{padding:10px;border:1px solid var(--line);border-radius:5px;font-size:13px;line-height:1.5;user-select:text;overflow-wrap:anywhere;margin:8px 0}
 .detail-info h2{font-size:25px;margin:3px 0 10px;overflow-wrap:anywhere}

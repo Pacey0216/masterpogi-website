@@ -34,7 +34,6 @@
       variantChanged:'Hindi na available ang dating pinili. Piliin muli ang available na grade at sukat.',
       chooseVariant:'Piliin ang grade at sukat para makita ang eksaktong stock at SKU.',chooseGrade:'Pumili ng grade',chooseSize:'Pumili ng sukat',chooseSku:'Pumili ng SKU',
       inquiryCopied:'Nakopya ang mensahe. I-paste ito sa Messenger.',copyInquiryManually:'Kopyahin ang mensaheng ito at i-paste sa Messenger:',
-      inquiryHint:'Kokopyahin ang mensahe kapag pinili mo ang Messenger. I-paste ito roon.',
       requestHint:'Puwedeng magpadala ng larawan ng relo sa Messenger. Hindi kailangang alam mo ang pangalan.',
       productDisclosure:'Replica ang lahat ng relong ibinebenta rito; hindi authentic na produkto ng mga tatak na binanggit. Ang Japan, Swiss, at Super C (1:1) ay mga kategorya ng grade ng nagbebenta, hindi sertipikasyon ng tatak o patunay ng bansang pinagmulan.',
       footerDisclaimer:'Ang mga pangalan, trademark, at logo ng ibang tatak ay pag-aari ng kani-kanilang may-ari. Independent na nagbebenta ang Master Pogi at walang kaugnayan, sponsorship, o endorsement mula sa mga tatak na ito. Ginagamit ang mga pangalan upang makatulong sa pagkilala at pagkumpara ng mga listing.',
@@ -67,7 +66,6 @@
       variantChanged:'Your previous choice is no longer available. Choose an available grade and size again.',
       chooseVariant:'Choose a grade and size to see its exact stock and SKU.',chooseGrade:'Choose a grade',chooseSize:'Choose a size',chooseSku:'Choose a SKU',
       inquiryCopied:'Message copied. Paste it in Messenger.',copyInquiryManually:'Copy this message and paste it in Messenger:',
-      inquiryHint:'Selecting Messenger copies your inquiry. Paste it there.',
       requestHint:'Send a watch photo in Messenger. You do not need to know its name.',
       productDisclosure:'All watches sold here are replicas, not authentic products of the named brands. Japan, Swiss, and Super C (1:1) are seller grade categories, not brand certifications or proof of country of origin.',
       footerDisclaimer:'Third-party names, trademarks, and logos belong to their respective owners. Master Pogi is an independent seller and is not affiliated with, sponsored by, or endorsed by those brands. Product references are provided to help buyers identify and compare listings.',
@@ -167,12 +165,19 @@
   }
   function updateCarousel(){const el=$('topSellers');$('topPrev').disabled=el.scrollLeft<2;$('topNext').disabled=el.scrollLeft+el.clientWidth>=el.scrollWidth-2;}
   function moveCarousel(direction){const el=$('topSellers');el.scrollBy({left:direction*(el.clientWidth+parseFloat(getComputedStyle(el).gap||0)),behavior:scrollBehavior()});}
-  function updateFilterOptions(){
-    const current=filters(),brands=unique(state.products.map(p=>p.brand)).sort((a,b)=>a.localeCompare(b));
-    const grades=unique(state.products.flatMap(p=>variants(p).map(v=>v.grade))).sort((a,b)=>a.localeCompare(b));
-    for(const [id,list,all,previous] of [['brandFilter',brands,t('allBrands'),current.brand],['gradeFilter',grades,t('allGrades'),current.grade]]){
+  function updateFilterOptions(changed){
+    const products=M.filterProducts(state.products,{}),current=filters();
+    const allBrands=unique(products.map(p=>p.brand));
+    const allGrades=unique(products.flatMap(p=>variants(p).map(v=>v.grade)));
+    let brand=allBrands.includes(current.brand)?current.brand:'',grade=allGrades.includes(current.grade)?current.grade:'';
+    if(brand&&grade&&!products.some(p=>p.brand===brand&&variants(p).some(v=>v.grade===grade))){
+      if(changed==='grade')brand='';else grade='';
+    }
+    const brands=unique(products.filter(p=>!grade||variants(p).some(v=>v.grade===grade)).map(p=>p.brand)).sort((a,b)=>a.localeCompare(b));
+    const grades=unique(products.filter(p=>!brand||p.brand===brand).flatMap(p=>variants(p).map(v=>v.grade))).sort((a,b)=>a.localeCompare(b));
+    for(const [id,list,all,selected] of [['brandFilter',brands,t('allBrands'),brand],['gradeFilter',grades,t('allGrades'),grade]]){
       $(id).replaceChildren(new Option(all,''),...list.map(v=>new Option(id==='gradeFilter'?gradeLabel(v):v,v)));
-      $(id).value=list.includes(previous)?previous:'';
+      $(id).value=selected;
     }
   }
   function renderInventoryStatus(){
@@ -217,6 +222,7 @@
   }
   function renderGallery(){
     const wrap=$('gallery');if(!wrap||!state.active)return;
+    if(!state.variant){wrap.innerHTML='<div class="photo-frame photo-unselected"><p>'+esc(t('chooseVariant'))+'</p></div>';return;}
     const valid=availablePositions(state.active,state.variant);
     if(!valid.includes(state.photo))state.photo=valid[0]??0;
     wrap.innerHTML=photoButton(state.active,state.variant,state.photo,true);
@@ -272,11 +278,11 @@
     const matches=vs.filter(x=>x.grade===state.detailGrade&&x.size===state.detailSize);
     const placeholder=label=>'<option value="">'+esc(t(label))+'</option>';
     const skuChoice=matches.length>1?'<label><span>SKU</span><select id="detailSku">'+placeholder('chooseSku')+options(matches.map(x=>x.sku),v?.sku)+'</select></label>':'';
-    $('productBody').innerHTML='<div class="product-detail"><div id="gallery" class="gallery"></div><div class="detail-info"><h2 id="productTitle">'+esc(p.name)+'</h2><p id="stockStatus" class="stock-status">'+esc(v?t('stock',v.stock):t('chooseVariant'))+'</p><div class="variant-fields"><label><span>'+esc(t('grade'))+'</span><select id="detailGrade">'+placeholder('chooseGrade')+options(grades,state.detailGrade,gradeLabel)+'</select></label><label><span>'+esc(t('size'))+'</span><select id="detailSize"'+(state.detailGrade===null?' disabled':'')+'>'+placeholder('chooseSize')+options(sizes,state.detailSize,sizeLabel)+'</select></label>'+skuChoice+'</div><div class="detail-actions"><button id="addComparison" type="button"'+(v?'':' disabled')+'>'+esc(t(state.editKey?'saveCompare':'compare'))+'</button>'+(v?'<a id="inquiryLink" class="primary" href="'+esc(productMessenger(p,v))+'" target="_blank" rel="noopener noreferrer">'+esc(t('inquiryButton'))+'</a>':'<button type="button" class="primary" id="chooseInquiryVariant">'+esc(t('inquiryButton'))+'</button>')+'</div><p id="detailMessage" class="detail-message" role="status"></p>'+dl([...specRows(p,v),...extraRows(p)])+'</div></div>';
+    $('productBody').innerHTML='<div class="product-detail"><div id="gallery" class="gallery"></div><div class="detail-info"><h2 id="productTitle">'+esc(p.name)+'</h2><p id="stockStatus" class="stock-status"'+(v?'':' hidden')+'>'+esc(v?t('stock',v.stock):'')+'</p><div class="variant-fields"><label><span>'+esc(t('grade'))+'</span><select id="detailGrade">'+placeholder('chooseGrade')+options(grades,state.detailGrade,gradeLabel)+'</select></label><label><span>'+esc(t('size'))+'</span><select id="detailSize"'+(state.detailGrade===null?' disabled':'')+'>'+placeholder('chooseSize')+options(sizes,state.detailSize,sizeLabel)+'</select></label>'+skuChoice+'</div><div class="detail-actions"><button id="addComparison" type="button"'+(v?'':' disabled')+'>'+esc(t(state.editKey?'saveCompare':'compare'))+'</button>'+(v?'<a id="inquiryLink" class="primary" href="'+esc(productMessenger(p,v))+'" target="_blank" rel="noopener noreferrer">'+esc(t('inquiryButton'))+'</a>':'<button type="button" class="primary" id="chooseInquiryVariant">'+esc(t('inquiryButton'))+'</button>')+'</div><p id="detailMessage" class="detail-message" role="status"></p>'+dl([...specRows(p,v),...extraRows(p)])+'</div></div>';
     const disclaimer=document.createElement('p');disclaimer.className='popup-disclaimer';disclaimer.textContent=t('popupDisclaimer');$('productBody').append(disclaimer);
     if(p.description){
       const description=document.createElement('p');description.className='product-description';description.textContent=p.description;
-      $('productBody').querySelector('.detail-actions').after(description);
+      $('productTitle').after(description);
     }
     renderGallery();renderMessages();
     const updateChoice=(grade,size,exactSku=null)=>{
@@ -293,7 +299,6 @@
     if($('chooseInquiryVariant'))$('chooseInquiryVariant').onclick=()=>{state.detailMessage='chooseVariant';renderMessages();$(state.detailGrade===null?'detailGrade':state.detailSize===null?'detailSize':'detailSku')?.focus();};
     if($('inquiryLink')){
       $('inquiryLink').onclick=()=>copyMessengerMessage(M.inquiryText(p,v),$('inquiryLink'));
-      const hint=document.createElement('p');hint.className='hint';hint.textContent=t('inquiryHint');$('inquiryLink').after(hint);
     }
     $('addComparison').onclick=addComparison;
   }
@@ -441,9 +446,9 @@
     });
     enhanceImages(grid);
   }
-  function filterChanged(){state.page=1;renderProducts();}
-  $('filters').onsubmit=e=>e.preventDefault();$('catalogSearch').oninput=filterChanged;$('brandFilter').onchange=filterChanged;$('gradeFilter').onchange=filterChanged;
-  $('clearFilters').onclick=()=>{$('filters').reset();filterChanged();};
+  function filterChanged(changed){if(changed)updateFilterOptions(changed);state.page=1;renderProducts();}
+  $('filters').onsubmit=e=>e.preventDefault();$('catalogSearch').oninput=()=>filterChanged();$('brandFilter').onchange=()=>filterChanged('brand');$('gradeFilter').onchange=()=>filterChanged('grade');
+  $('clearFilters').onclick=()=>{$('filters').reset();filterChanged('clear');};
   $('pagePrev').onclick=()=>changePage(-1);$('pageNext').onclick=()=>changePage(1);
   $('topPrev').onclick=()=>moveCarousel(-1);$('topNext').onclick=()=>moveCarousel(1);
   $('topSellers').addEventListener('scroll',updateCarousel,{passive:true});window.addEventListener('resize',updateCarousel);
